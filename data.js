@@ -38,9 +38,9 @@
    Un id absent de cette liste = carte normale, sans image. Rien ne casse.
    ============================================================ */
 const AVEC_IMAGE = [
-  // ajoute ici l'id d'un personnage pour afficher son image :  "mavuika", "hu-tao"
+  "albedo"// ajoute ici l'id d'un personnage pour afficher son image :  "mavuika", "hu-tao"
 ];
-"albedo"
+
 const VERSION_JEU = "7.0";
 const MAJ = "Septembre 2026";
 
