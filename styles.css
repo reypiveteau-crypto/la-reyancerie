@@ -216,6 +216,17 @@ p { margin: 0; }
   color: var(--el); flex: 0 0 auto;
 }
 .el-badge.big { width: 56px; height: 56px; border-radius: 15px; }
+
+/* vignette de personnage, quand une image est fournie */
+.el-badge { position: relative; overflow: hidden; }
+.el-badge .portrait {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.el-badge.avec-image { background: var(--surface-2); border-color: color-mix(in srgb, var(--el) 60%, transparent); }
+.el-badge.avec-image svg { display: none; }
+.el-badge.big.avec-image { width: 84px; height: 84px; border-radius: 18px; }
 .card-flags { display: flex; align-items: center; gap: 6px; }
 .tier {
   font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
