@@ -43,6 +43,11 @@ const ARMES = {
   "Catalyseur": '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 0 16 8 8 0 0 1 0-16Zm0 3.2 1.5 3.3 3.3 1.5-3.3 1.5L12 16.8l-1.5-3.3L7.2 12l3.3-1.5L12 7.2Z"/>'
 };
 
+/* Champ facultatif `image` dans data.js :
+     image: "images/mavuika.jpg"
+   Le fichier doit être déposé dans un dossier `images/` à la racine du dépôt.
+   Sans ce champ — ou si le fichier est introuvable — la crête d'élément s'affiche. */
+
 const app = document.getElementById("app");
 let fElement = null, fRegion = null, fRole = null, fBuild = false, recherche = "";
 
@@ -180,6 +185,7 @@ function vueListe() {
   if (r) r.onclick = () => { fElement = fRegion = fRole = null; fBuild = false; recherche = ""; vueListe(); };
 
   app.querySelectorAll(".card").forEach(c => c.onclick = () => { location.hash = "#/" + c.dataset.id; });
+  brancherImages();
 }
 
 function carte(p) {
@@ -188,7 +194,7 @@ function carte(p) {
             style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
       <span class="card-rail"></span>
       <div class="card-top">
-        <span class="el-badge">${svgEl(p.element)}</span>
+        <span class="el-badge${p.image ? " avec-image" : ""}">${p.image ? `<img class="portrait" src="${esc(p.image)}" alt="">` : ""}${svgEl(p.element)}</span>
         <span class="card-flags">
           ${p.tier ? `<span class="tier">${p.tier}</span>` : ""}
           ${p.build ? `<span class="has-build" title="Build détaillé disponible">●</span>` : ""}
@@ -214,7 +220,7 @@ function vueFiche(p) {
       <button class="back" id="back">← Tous les personnages</button>
 
       <header class="detail-head">
-        <span class="el-badge big">${svgEl(p.element, 30)}</span>
+        <span class="el-badge big${p.image ? " avec-image" : ""}">${p.image ? `<img class="portrait" src="${esc(p.image)}" alt="Portrait de ${esc(p.nom)}">` : ""}${svgEl(p.element, 30)}</span>
         <div class="detail-id">
           <p class="detail-region">${esc(p.region)}</p>
           <h2>${esc(p.nom)}</h2>
@@ -235,14 +241,14 @@ function vueFiche(p) {
 
       ${b ? panneauxBuild(p, b) : `
         <section class="panel panel-empty">
-          <h3>Build en préparation</h3>
-          <p>Le build de ${esc(p.nom)} n'a pas encore été vérifié sur les sources de référence,
-             et je préfère ne rien afficher plutôt qu'afficher quelque chose de faux.
-             ${avecBuild} personnages ont déjà leur build complet.</p>
+          <h3>${p.note ? "Pourquoi pas de build ici" : "Build en préparation"}</h3>
+          <p>${p.note ? esc(p.note) : `Le build de ${esc(p.nom)} n'a pas encore été vérifié sur les sources de référence,
+             et rien n'est affiché plutôt que quelque chose de faux. ${avecBuild} personnages ont déjà leur build complet.`}</p>
         </section>`}
     </article>
   `;
   document.getElementById("back").onclick = () => { location.hash = ""; };
+  brancherImages();
 }
 
 function panneauxBuild(p, b) {
@@ -288,6 +294,18 @@ function panneauxBuild(p, b) {
         </div>
       </section>
     </div>`;
+}
+
+/* Si une image déclarée dans data.js n'existe pas ou ne charge pas,
+   on la retire et la crête d'élément reprend sa place. Aucune case vide. */
+function brancherImages() {
+  app.querySelectorAll("img.portrait").forEach(img => {
+    img.addEventListener("error", () => {
+      const b = img.closest(".el-badge");
+      if (b) b.classList.remove("avec-image");
+      img.remove();
+    });
+  });
 }
 
 /* ---------- Routeur ---------- */
