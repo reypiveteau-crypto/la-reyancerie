@@ -442,5 +442,5 @@ dl { margin: 0; }
 .detail.avec-fond .fond {
   transform: translateX(calc(-50% + var(--decal))) scale(var(--zoom));
 }
-.stars { color: #a98bd6; }
-.stars.s5 { color: var(--gold); }
+/* Étoiles dorées pour tout le monde, 4★ comme 5★ */
+.stars { color: var(--gold); }
