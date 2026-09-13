@@ -38,7 +38,37 @@
    Un id absent de cette liste = carte normale, sans image. Rien ne casse.
    ============================================================ */
 const AVEC_IMAGE = [
-  "albedo"// ajoute ici l'id d'un personnage pour afficher son image :  "mavuika", "hu-tao"
+  /* Mondstadt */
+  "albedo", "amber", "barbara", "bennett", "dahlia", "diluc", "diona",
+  "durin", "eula", "fischl", "jean", "kaeya", "klee", "lisa", "lohen",
+  "mika", "mona", "noelle", "razor", "rosaria", "sucrose", "varka", "venti",
+  /* Liyue */
+  "baizhu", "beidou", "chongyun", "ganyu", "gaming", "hu-tao", "keqing",
+  "lan-yan", "ningguang", "qiqi", "shenhe", "xiangling", "xianyun", "xiao",
+  "xingqiu", "xinyan", "yanfei", "yaoyao", "yelan", "yun-jin", "zhongli",
+  "zibai",
+  /* Inazuma */
+  "arataki-itto", "chiori", "gorou", "kaedehara-kazuha", "kamisato-ayaka",
+  "kamisato-ayato", "kirara", "kujou-sara", "kuki-shinobu", "raiden-shogun",
+  "sangonomiya-kokomi", "sayu", "shikanoin-heizou", "thoma", "yae-miko",
+  "yoimiya", "yumemizuki-mizuki",
+  /* Sumeru */
+  "alhaitham", "candace", "collei", "cyno", "dehya", "dori", "faruzan",
+  "kaveh", "layla", "nahida", "nilou", "sethos", "tighnari", "wanderer",
+  /* Fontaine */
+  "charlotte", "chevreuse", "clorinde", "emilie", "escoffier", "freminet",
+  "furina", "lynette", "lyney", "navia", "neuvillette", "sigewinne",
+  "wriothesley",
+  /* Natlan */
+  "chasca", "citlali", "iansan", "ifa", "kachina", "kinich", "mavuika",
+  "mualani", "ororon", "varesa", "xilonen",
+  /* Nod-Krai */
+  "aino", "flins", "illuga", "ineffa", "jahoda", "lauma", "linnea", "nefer",
+  "nicole", "prune",
+  /* Snezhnaya */
+  "columbina", "alyosha", "arlecchino", "odette", "sandrone", "tartaglia",
+  /* Autre */
+  "aloy", "skirk", "voyageur"
 ];
 
 const VERSION_JEU = "7.0";
