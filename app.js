@@ -44,9 +44,10 @@ const ARMES = {
 };
 
 /* Champ facultatif `image` dans data.js :
-     image: "images/mavuika.jpg"
-   Le fichier doit être déposé dans un dossier `images/` à la racine du dépôt.
-   Sans ce champ — ou si le fichier est introuvable — la crête d'élément s'affiche. */
+     image: "mavuika.png"
+   L'image s'affiche en fond de la carte et en haut de la fiche, assombrie pour que
+   le texte reste lisible. La crête d'élément reste visible par-dessus.
+   Sans ce champ — ou si le fichier est introuvable — la carte reste comme avant. */
 
 const app = document.getElementById("app");
 let fElement = null, fRegion = null, fRole = null, fBuild = false, recherche = "";
@@ -190,11 +191,12 @@ function vueListe() {
 
 function carte(p) {
   return `
-    <button class="card ${p.rarete === 5 ? "is-5" : ""}" data-id="${p.id}"
+    <button class="card ${p.rarete === 5 ? "is-5" : ""}${p.image ? " avec-fond" : ""}" data-id="${p.id}"
             style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
+      ${p.image ? `<img class="fond" src="${esc(p.image)}" alt="">` : ""}
       <span class="card-rail"></span>
       <div class="card-top">
-        <span class="el-badge${p.image ? " avec-image" : ""}">${p.image ? `<img class="portrait" src="${esc(p.image)}" alt="">` : ""}${svgEl(p.element)}</span>
+        <span class="el-badge">${svgEl(p.element)}</span>
         <span class="card-flags">
           ${p.tier ? `<span class="tier">${p.tier}</span>` : ""}
           ${p.build ? `<span class="has-build" title="Build détaillé disponible">●</span>` : ""}
@@ -216,11 +218,12 @@ function carte(p) {
 function vueFiche(p) {
   const b = p.build;
   app.innerHTML = `
-    <article class="detail" style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
+    <article class="detail${p.image ? " avec-fond" : ""}" style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
+      ${p.image ? `<img class="fond" src="${esc(p.image)}" alt="Portrait de ${esc(p.nom)}">` : ""}
       <button class="back" id="back">← Tous les personnages</button>
 
       <header class="detail-head">
-        <span class="el-badge big${p.image ? " avec-image" : ""}">${p.image ? `<img class="portrait" src="${esc(p.image)}" alt="Portrait de ${esc(p.nom)}">` : ""}${svgEl(p.element, 30)}</span>
+        <span class="el-badge big">${svgEl(p.element, 30)}</span>
         <div class="detail-id">
           <p class="detail-region">${esc(p.region)}</p>
           <h2>${esc(p.nom)}</h2>
@@ -299,10 +302,9 @@ function panneauxBuild(p, b) {
 /* Si une image déclarée dans data.js n'existe pas ou ne charge pas,
    on la retire et la crête d'élément reprend sa place. Aucune case vide. */
 function brancherImages() {
-  app.querySelectorAll("img.portrait").forEach(img => {
+  app.querySelectorAll("img.fond").forEach(img => {
     img.addEventListener("error", () => {
-      const b = img.closest(".el-badge");
-      if (b) b.classList.remove("avec-image");
+      img.closest(".avec-fond")?.classList.remove("avec-fond");
       img.remove();
     });
   });
