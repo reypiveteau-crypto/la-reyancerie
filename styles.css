@@ -435,7 +435,7 @@ dl { margin: 0; }
 .card.avec-fond .fond,
 .detail.avec-fond .fond {
   --zoom: 1.6;
-  --decal: 25%;
+  --decal: 28%;
   transform: translateX(var(--decal)) scale(var(--zoom));
   transform-origin: center 18%;
 }
