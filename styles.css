@@ -442,5 +442,6 @@ dl { margin: 0; }
 .detail.avec-fond .fond {
   transform: translateX(calc(-50% + var(--decal))) scale(var(--zoom));
 }
-/* Étoiles dorées pour tout le monde, 4★ comme 5★ */
-.stars { color: var(--gold); }
+/* 4★ en violet foncé, 5★ en or */
+.stars { color: #7b52b8; }
+.stars.s5 { color: var(--gold); }
