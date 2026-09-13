@@ -311,11 +311,23 @@ function panneauxBuild(p, b) {
     </div>`;
 }
 
-/* Si une image déclarée dans data.js n'existe pas ou ne charge pas,
-   on la retire et la crête d'élément reprend sa place. Aucune case vide. */
+/* Si une image déclarée dans data.js n'existe pas ou ne charge pas :
+   on réessaie avec les autres extensions courantes (une capture d'écran est
+   souvent un .jpg), puis on abandonne et la crête d'élément reprend sa place.
+   Aucune case vide, jamais d'icône cassée. */
+const EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
+
 function brancherImages() {
   app.querySelectorAll("img.fond").forEach(img => {
     img.addEventListener("error", () => {
+      const src = img.getAttribute("src") || "";
+      const point = src.lastIndexOf(".");
+      const ext = point > -1 ? src.slice(point).toLowerCase() : "";
+      const suivante = EXTENSIONS[EXTENSIONS.indexOf(ext) + 1];
+      if (ext && suivante) {           // il reste une extension à essayer
+        img.setAttribute("src", src.slice(0, point) + suivante);
+        return;
+      }
       img.closest(".avec-fond")?.classList.remove("avec-fond");
       img.remove();
     });
