@@ -24,6 +24,23 @@
    relevés sur la version française de genshin-builds.com.
    ============================================================ */
 
+/* ============================================================
+   IMAGES DE PERSONNAGES
+   ---------------------
+   Dépose l'image à la racine du dépôt, nommée comme l'`id` du personnage
+   (mavuika.png, hu-tao.png, kaedehara-kazuha.png), puis ajoute simplement
+   son id dans la liste ci-dessous. C'est tout : pas besoin de toucher à
+   la fiche du personnage.
+
+   - "mavuika"        →  cherche mavuika.png
+   - "mavuika.jpg"    →  si tu écris l'extension, elle est utilisée telle quelle
+
+   Un id absent de cette liste = carte normale, sans image. Rien ne casse.
+   ============================================================ */
+const AVEC_IMAGE = [
+  "albedo"
+];
+
 const VERSION_JEU = "7.0";
 const MAJ = "Septembre 2026";
 
@@ -31,8 +48,7 @@ const PERSONNAGES = [
 
 /* ========================= MONDSTADT ========================= */
 { id:"albedo", nom:"Albedo", element:"Geo", arme:"Épée", rarete:5, region:"Mondstadt", role:"Sous-DPS",
-    image: "albedo.png",
- bio:"Alchimiste en chef des Chevaliers de Favonius. Créature synthétique créée par l'alchimiste Rhinedottir, il étudie le monde avec un détachement clinique." ,
+  bio:"Alchimiste en chef des Chevaliers de Favonius. Créature synthétique créée par l'alchimiste Rhinedottir, il étudie le monde avec un détachement clinique." ,
   build:{ armes:["Chanson de patrouille de sommet","Uraku Misugiri","Éclat lunaire luminescent","Flûte d'ezpitzal","Fuseau de cinabre","Messager de l'Aube"],
     artefacts:["Coquille des rêves opulents (4p)","Troupe dorée (4p)","Ténacité du Millelithe (4p)","2p Roche ancienne + 2p DEF%"],
     stats:{sablier:"DEF%",coupe:"Bonus DGT Geo (ou DEF% au-delà de 3000 DEF)",couronne:"Taux CRIT ou DGT CRIT"},
@@ -818,9 +834,21 @@ const PERSONNAGES = [
     conseil:"Elle scale sur les PV et ses morsures montent en puissance avec le nombre de Marques de Requin : prends le temps d'en empiler avant de frapper.",
     equipes:[{nom:"Vaporize",membres:["Mualani","Xilonen","Xiangling","Zhongli"]},{nom:"Vaporize Mona",membres:["Mualani","Mona","Sucrose","Voyageur"]}] } },
 { id:"ororon", nom:"Ororon", element:"Electro", arme:"Arc", rarete:4, region:"Natlan", role:"Sous-DPS / Support", tier:"T1",
-  bio:"Jeune membre des Maîtres du Vent Nocturne, petit-fils adoptif de Citlali, qui vit au contact des créatures sauvages." },
+  bio:"Jeune membre des Maîtres du Vent Nocturne, petit-fils adoptif de Citlali, qui vit au contact des créatures sauvages." ,
+  build:{ armes:["Étoile polaire","La première grande magie","Pulsation du tonnerre","Simulacre d'eau","Ailes de la Voûte d'Azur"],
+    artefacts:["Parchemin du héros de la Cité de braise (4p)","Ancien rituel royal (4p)","Emblème du destin brisé (4p)","Codex d'obsidienne (4p)"],
+    stats:{sablier:"Maîtrise élémentaire ou Recharge d'Énergie",coupe:"Maîtrise élémentaire",couronne:"Maîtrise élémentaire"},
+    substats:["Recharge d'Énergie","Taux CRIT","DGT CRIT","ATQ%","Maîtrise élémentaire"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Full Maîtrise élémentaire sur les trois pièces : il vit des réactions, pas de ses dégâts propres. Son Déchaînement applique de l'Electro hors terrain pendant toute la rotation.",
+    equipes:[{nom:"Multi-réactions",membres:["Ororon","Chasca","Furina","Bennett"]},{nom:"Electro-Chargé",membres:["Ororon","Clorinde","Furina","Xilonen"]}] } },
 { id:"varesa", nom:"Varesa", element:"Electro", arme:"Catalyseur", rarete:5, region:"Natlan", role:"DPS principal", tier:"T1",
-  bio:"Jeune combattante du Collectif d'Abondance, obsédée par les films de super-héros et bien décidée à en devenir une." },
+  bio:"Jeune combattante du Collectif d'Abondance, obsédée par les films de super-héros et bien décidée à en devenir une." ,
+  build:{ armes:["Notions colorées","Reliquaire de la vérité","Vérité de Kagura","L'origine des Quatre Vents","Tome du flux éternel","Instant surfant"],
+    artefacts:["Serment de la longue nuit (4p)","Codex d'obsidienne (4p)","Chasseur de la Maréchaussée (4p)","Cœur du Voyageur (4p)"],
+    stats:{sablier:"ATQ%",coupe:"Bonus DGT Electro",couronne:"Taux CRIT ou DGT CRIT"},
+    substats:["Recharge d'Énergie","Taux CRIT","DGT CRIT","ATQ%"], talents:["Attaque normale","Déchaînement","Compétence"],
+    conseil:"Ses dégâts passent par les attaques plongeantes de son état Nuitâme, pas par sa compétence : monte l'attaque normale en premier, c'est elle qui porte le plongeon.",
+    equipes:[{nom:"Surcharge Mavuika",membres:["Varesa","Mavuika","Chevreuse","Iansan"]},{nom:"Surcharge Bennett",membres:["Varesa","Bennett","Chevreuse","Iansan"]}] } },
 { id:"xilonen", nom:"Xilonen", element:"Geo", arme:"Épée", rarete:5, region:"Natlan", role:"Support", tier:"T1",
   bio:"Artisane et DJ du clan des Enfants des Échos, dernière gardienne d'un savoir-faire de forge que plus personne ne pratique.",
   build:{ armes:["Chanson de patrouille de sommet (signature)","Serment de la liberté","Épée de Favonius","Flûte d'ezpitzal","Épée céleste"],
@@ -832,7 +860,13 @@ const PERSONNAGES = [
 
 /* ========================= NOD-KRAI ========================= */
 { id:"aino", nom:"Aino", element:"Hydro", arme:"Claymore", rarete:5, region:"Nod-Krai", role:"Support", tier:"T1",
-  bio:"Mécanicienne et inventrice de génie originaire de Nod-Krai, passionnée de machines compliquées et de sucreries." },
+  bio:"Mécanicienne et inventrice de génie originaire de Nod-Krai, passionnée de machines compliquées et de sucreries." ,
+  build:{ armes:["Espadon de Favonius","Aigue-marine de Makhaira","Perception forgée par les flammes","Clé universelle","Espadon rituel","Fluorescence"],
+    artefacts:["Sérénade de la lune soyeuse (4p)","Ancien rituel royal (4p)","Parchemin du héros de la Cité de braise (4p)","Instructeur (4p)"],
+    stats:{sablier:"Recharge d'Énergie ou Maîtrise élémentaire",coupe:"Maîtrise élémentaire",couronne:"Maîtrise élémentaire ou Taux CRIT"},
+    substats:["Recharge d'Énergie","Maîtrise élémentaire","Taux CRIT"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Applicatrice Hydro hors terrain, à jouer en Maîtrise élémentaire. Elle porte le Signe Lunaire, ce qui débloque le multiplicateur de Flins et des autres Lunaire-Chargé.",
+    equipes:[{nom:"Vaporize Hu Tao",membres:["Aino","Hu Tao","Furina","Citlali"]},{nom:"Vaporize Yoimiya",membres:["Aino","Yoimiya","Yelan","Ineffa"]}] } },
 { id:"columbina", nom:"Columbina", element:"Hydro", arme:"Catalyseur", rarete:5, region:"Snezhnaya", role:"Sous-DPS / Support", tier:"T0",
   bio:"Troisième des Onze Harbingers des Fatui, dite la Damoiselle. Elle chante en permanence et personne ne sait ce qu'elle est vraiment.",
   build:{ armes:["Rappel de la nocturne (signature)","Malice (prototype)","Jade sacrificiel","Code de Favonius"],
@@ -850,7 +884,13 @@ const PERSONNAGES = [
     conseil:"Il lui faut impérativement un autre personnage Signe Lunaire dans l'équipe : sans ça, son multiplicateur principal ne se déclenche pas.",
     equipes:[{nom:"Lunaire-Chargé #1",membres:["Flins","Aino","Xilonen","Ineffa"]},{nom:"Lunaire-Chargé #2",membres:["Flins","Aino","Sucrose","Ineffa"]}] } },
 { id:"illuga", nom:"Illuga", element:"Geo", arme:"Lance", rarete:5, region:"Nod-Krai", role:"Support",
-  bio:"Membre de l'escouade d'investigation des Loriots Cauchemardesques, et plus jeune chef d'escouade parmi les Gardiens de la Lumière." },
+  bio:"Membre de l'escouade d'investigation des Loriots Cauchemardesques, et plus jeune chef d'escouade parmi les Gardiens de la Lumière." ,
+  build:{ armes:["Lance de Favonius","Fléau du dragon","Lance en croix de Kitain","Lumière du faucheur","Berge de la Voûte d'Azur","Guisarme stellaire (prototype)"],
+    artefacts:["Sérénade de la lune soyeuse (4p)","Cœur du Voyageur (4p)","2p Nuit de la révélation céleste + 2p Bande vagabonde"],
+    stats:{sablier:"Maîtrise élémentaire ou Recharge d'Énergie",coupe:"Maîtrise élémentaire",couronne:"Maîtrise élémentaire"},
+    substats:["Recharge d'Énergie","Maîtrise élémentaire","Taux CRIT"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Support Geo full Maîtrise élémentaire, ce qui est contre-intuitif pour un Geo : il sert les réactions Lunaire-Cristallisation, pas les dégâts bruts.",
+    equipes:[{nom:"Lunaire-Cristallisation",membres:["Illuga","Zibai","Columbina","Gorou"]},{nom:"Lunaire-Cristallisation Zhongli",membres:["Illuga","Zibai","Columbina","Zhongli"]}] } },
 { id:"ineffa", nom:"Ineffa", element:"Electro", arme:"Lance", rarete:5, region:"Nod-Krai", role:"Sous-DPS / Support", tier:"T0",
   bio:"Combattante de Nod-Krai au service d'une organisation locale, pièce centrale des compositions Lunaire-Chargé.",
   build:{ armes:["Halo fracturé","Bâton des sables écarlates","Élégie de Lumidouce","Symphoniste des senteurs","Bâton de Homa"],
@@ -860,7 +900,13 @@ const PERSONNAGES = [
     conseil:"Elle buffe et pose un bouclier hors terrain en même temps : garde assez de Recharge d'Énergie pour ne jamais rater une rotation.",
     equipes:[{nom:"Lunaire-Chargé",membres:["Ineffa","Flins","Aino","Xilonen"]},{nom:"Lunaire-Chargé Clorinde",membres:["Ineffa","Clorinde","Sucrose","Aino"]}] } },
 { id:"jahoda", nom:"Jahoda", element:"Anemo", arme:"Arc", rarete:5, region:"Nod-Krai", role:"Sous-DPS / Soigneur",
-  bio:"Employée à tout faire du Curatorium des Secrets, réputée pour sa fiabilité à toute épreuve." },
+  bio:"Employée à tout faire du Curatorium des Secrets, réputée pour sa fiabilité à toute épreuve." ,
+  build:{ armes:["Arc de chasse de Favonius","Ultime soupir","Arc pluvial du serpent arc-en-ciel","Crochet de capture","Ailes de la Voûte d'Azur","Arc d'Amos"],
+    artefacts:["Ombre de la Verte Chasseuse (4p)","Sérénade de la lune soyeuse (4p)","Souvenir de forêt (4p)","Cœur du Voyageur (4p)"],
+    stats:{sablier:"Recharge d'Énergie",coupe:"ATQ%",couronne:"Bonus de Soin"},
+    substats:["Recharge d'Énergie","ATQ%","Taux CRIT","Maîtrise élémentaire"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Soin continu et réactions hors terrain dans le même Déchaînement : sablier en Recharge d'Énergie obligatoire, sinon rien ne tourne.",
+    equipes:[{nom:"Lunaire-Chargé",membres:["Jahoda","Flins","Aino","Ineffa"]},{nom:"Lunaire-Chargé Fischl",membres:["Jahoda","Flins","Aino","Fischl"]}] } },
 { id:"lauma", nom:"Lauma", element:"Dendro", arme:"Catalyseur", rarete:5, region:"Nod-Krai", role:"Support", tier:"T0",
   bio:"Figure Dendro de Nod-Krai liée aux réactions Lunaires, au cœur des compositions Lunar Bloom.",
   build:{ armes:["Miroir du tisse-nuit (signature)","Mille rêves flottants","Lyre du tisse-lumière","Veillée d'appel d'étoiles","Matinée flânée sous le soleil"],
@@ -870,17 +916,47 @@ const PERSONNAGES = [
     conseil:"Full Maîtrise élémentaire sur les trois pièces principales. Souvenir de forêt reste le set de référence pour casser la RES Dendro.",
     equipes:[{nom:"Hyperbloom #1",membres:["Lauma","Alhaitham","Xingqiu","Kuki Shinobu"]},{nom:"Hyperbloom #2",membres:["Lauma","Furina","Yelan","Kuki Shinobu"]}] } },
 { id:"linnea", nom:"Linnea", element:"Geo", arme:"Arc", rarete:5, region:"Nod-Krai", role:"Sous-DPS / Support", tier:"T0",
-  bio:"Naturaliste et conseillère de l'antenne de Nod-Krai de la Guilde des Aventuriers, accompagnée de sa créature Lumi." },
+  bio:"Naturaliste et conseillère de l'antenne de Nod-Krai de la Guilde des Aventuriers, accompagnée de sa créature Lumi." ,
+  build:{ armes:["Serment de gel doré (signature)","Ultime soupir","Simulacre d'eau","La voie du chasseur","Lance-pierres (F2P)","Plumage cramoisi du vautour astral"],
+    artefacts:["Aubade d'astre et de lune (4p)","Coquille des rêves opulents (4p)","Cœur du Voyageur (4p)","2p Coquille des rêves opulents + 2p Maîtrise élémentaire +80"],
+    stats:{sablier:"DEF% ou Recharge d'Énergie",coupe:"DEF%",couronne:"Taux CRIT ou DGT CRIT"},
+    substats:["Taux CRIT","DGT CRIT","DEF%","Maîtrise élémentaire","Recharge d'Énergie"], talents:["Compétence","Déchaînement","Attaque normale"],
+    conseil:"Elle scale sur la DEF : coupe en DEF%, jamais en Bonus DGT Geo. Ses dégâts passent par sa créature Lumi, qui reste sur le terrain après le changement.",
+    equipes:[{nom:"Lunaire-Cristallisation",membres:["Linnea","Zibai","Columbina","Gorou"]},{nom:"Éclat Lunaire",membres:["Linnea","Zibai","Illuga","Aino"]}] } },
 { id:"nefer", nom:"Nefer", element:"Dendro", arme:"Catalyseur", rarete:5, region:"Nod-Krai", role:"DPS principal", tier:"T0",
-  bio:"Propriétaire du Curatorium des Secrets, redoutablement débrouillarde, spécialiste des réactions Lunar Bloom." },
+  bio:"Propriétaire du Curatorium des Secrets, redoutablement débrouillarde, spécialiste des réactions Lunar Bloom." ,
+  build:{ armes:["Reliquaire de la vérité","Rappel de la nocturne","Miroir du tisse-nuit","Matinée flânée sous le soleil","Veillée d'appel d'étoiles","Lanterne à moelle sombre"],
+    artefacts:["Nuit de la révélation céleste (4p)","Cœur du Voyageur (4p)","2p Nuit de la révélation céleste + 2p Bande vagabonde","2p Rêve doré + 2p Nuit de la révélation céleste"],
+    stats:{sablier:"Maîtrise élémentaire",coupe:"Maîtrise élémentaire",couronne:"Taux CRIT ou DGT CRIT"},
+    substats:["Taux CRIT","DGT CRIT","Maîtrise élémentaire"], talents:["Compétence","Déchaînement","Attaque normale"],
+    conseil:"Cas rare : sablier ET coupe en Maîtrise élémentaire, mais couronne en CRIT. Elle convertit les Bloom classiques en Lunar Bloom, qui eux peuvent faire des coups critiques.",
+    equipes:[{nom:"Lunar Bloom #1",membres:["Nefer","Lauma","Yaoyao","Aino"]},{nom:"Lunar Bloom #2",membres:["Nefer","Lauma","Nilou","Diona"]}] } },
 { id:"nicole", nom:"Nicole", element:"Pyro", arme:"Catalyseur", rarete:5, region:"Nod-Krai", role:"Support", tier:"T0",
-  bio:"Mage silencieuse qui protège ses alliés par des boucliers et des buffs d'attaque, surnommée l'ange sans voix." },
+  bio:"Mage silencieuse qui protège ses alliés par des boucliers et des buffs d'attaque, surnommée l'ange sans voix." ,
+  build:{ armes:["Heptades des anges","Chaînes mortelles","Écho de la grue","Atlas de la Voûte d'Azur","Veillée d'appel d'étoiles","Œil d'assermentation"],
+    artefacts:["Don céleste (4p)","Parchemin du héros de la Cité de braise (4p)","Ancien rituel royal (4p)","2p ATQ% + 2p ATQ%"],
+    stats:{sablier:"Recharge d'Énergie ou ATQ%",coupe:"ATQ%",couronne:"ATQ% ou Taux CRIT"},
+    substats:["Recharge d'Énergie","ATQ%","Taux CRIT"], talents:["Compétence","Déchaînement","Attaque normale"],
+    conseil:"Bouclier et buff d'ATQ scalent sur son propre ATQ : construis-la en ATQ pur, le CRIT ne lui sert à rien.",
+    equipes:[{nom:"Swirl Varka",membres:["Nicole","Varka","Prune","Bennett"]},{nom:"Swirl Durin",membres:["Nicole","Varka","Prune","Durin"]}] } },
 { id:"prune", nom:"Prune", element:"Anemo", arme:"Catalyseur", rarete:5, region:"Nod-Krai", role:"Support / Sous-DPS", tier:"T0.5",
-  bio:"Minuscule chasseuse de sorcières de Nod-Krai, lancée à la poursuite d'une sorcière coupable, selon elle, de tous les crimes imaginables." },
+  bio:"Minuscule chasseuse de sorcières de Nod-Krai, lancée à la poursuite d'une sorcière coupable, selon elle, de tous les crimes imaginables." ,
+  build:{ armes:["Code de Favonius","Heptades des anges","Écho de la grue","Atlas de la Voûte d'Azur","Chaînes mortelles","Œil d'assermentation"],
+    artefacts:["Ombre de la Verte Chasseuse (4p)","Don céleste (4p)","Ancien rituel royal (4p)"],
+    stats:{sablier:"Recharge d'Énergie ou ATQ%",coupe:"ATQ%",couronne:"ATQ% ou Taux CRIT"},
+    substats:["Recharge d'Énergie","ATQ%","Taux CRIT"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Coupe en ATQ% et non en Bonus DGT Anemo : comme les autres supports Anemo, elle buffe l'équipe plutôt que de frapper elle-même.",
+    equipes:[{nom:"Swirl Varka",membres:["Prune","Varka","Venti","Klee"]},{nom:"Aggravate",membres:["Prune","Clorinde","Fischl","Kirara"]}] } },
 
 /* ========================= SNEZHNAYA & FATUI ========================= */
 { id:"alyosha", nom:"Alyosha", element:"Electro", arme:"Lance", rarete:4, region:"Snezhnaya", role:"Support / Sous-DPS", tier:"T0.5",
-  bio:"Chasseur aguerri de Snezhnaya, qui soutient son équipe par des buffs et des soins liés aux réactions Stellaires." },
+  bio:"Chasseur aguerri de Snezhnaya, qui soutient son équipe par des buffs et des soins liés aux réactions Stellaires." ,
+  build:{ armes:["Lumière du faucheur","Lance de Favonius","Tamayuratei no Ohanashi","Chant de la veillée","Berge de la Voûte d'Azur","« La prise »"],
+    artefacts:["Ancien rituel royal (4p)","Cœur de la fournaise (4p)","2p Rideau du Gladiateur + 2p Journée sculptée par les vents ascendants"],
+    stats:{sablier:"ATQ% ou Recharge d'Énergie",coupe:"ATQ%",couronne:"ATQ% ou Taux CRIT"},
+    substats:["Recharge d'Énergie","ATQ%","Taux CRIT"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Buff et soin liés aux réactions Stellaires, calculés sur son ATQ : ATQ pur, pas de CRIT. Il lui faut un partenaire Cryo pour que le Stellaire se déclenche.",
+    equipes:[{nom:"Stellaire Yae Miko",membres:["Alyosha","Sandrone","Yae Miko","Odette"]},{nom:"Stellaire Qiqi",membres:["Alyosha","Sandrone","Qiqi","Odette"]}] } },
 { id:"arlecchino", nom:"Arlecchino", element:"Pyro", arme:"Lance", rarete:5, region:"Snezhnaya", role:"DPS principal", tier:"T1",
   bio:"Quatrième des Onze Harbingers des Fatui, dite le Valet. Elle dirige la Maison du Foyer, l'orphelinat qui l'a élevée et dont elle a tué la directrice.",
   build:{ armes:["Semblance de la lune écarlate (signature)","Lance de jade ailée","Bâton des sables écarlates","Bâton de Homa","Élégie de Lumidouce","Pampille blanche (F2P)"],
@@ -890,15 +966,39 @@ const PERSONNAGES = [
     conseil:"Rotation type : Compétence, buffs d'équipe, attaque chargée, puis 6 attaques normales et 3 dash-cancels. Tout passe par l'attaque normale.",
     equipes:[{nom:"Vaporize",membres:["Arlecchino","Mona","Bennett","Sucrose"]},{nom:"Melt",membres:["Arlecchino","Citlali","Xilonen","Bennett"]}] } },
 { id:"odette", nom:"Odette", element:"Cryo", arme:"Épée", rarete:5, region:"Snezhnaya", role:"Support", tier:"T0",
-  bio:"Ballerine célèbre de Snezhnaya, dont la danse est associée aux paysages gelés de son pays." },
+  bio:"Ballerine célèbre de Snezhnaya, dont la danse est associée aux paysages gelés de son pays." ,
+  build:{ armes:["Plume hivernale du lac blanc (signature)","Éclazur","Serment de la liberté","Final des profondeurs","Puits-de-braises","Épée du faucon"],
+    artefacts:["Cœur de la fournaise (4p)","Désenchantement dans l'ombre profonde (4p)","2p Rideau du Gladiateur + 2p Journée sculptée par les vents ascendants"],
+    stats:{sablier:"ATQ%",coupe:"ATQ%",couronne:"Taux CRIT ou DGT CRIT"},
+    substats:["DGT CRIT","Taux CRIT","ATQ%","Recharge d'Énergie","Maîtrise élémentaire"], talents:["Compétence","Déchaînement","Attaque normale"],
+    conseil:"Coupe en ATQ% et non en Bonus DGT Cryo : ses dégâts viennent des réactions Stellaires, qui ne profitent pas du bonus élémentaire.",
+    equipes:[{nom:"Stellaire Hypercarry",membres:["Odette","Sandrone","Yae Miko","Alyosha"]},{nom:"Stellaire Qiqi",membres:["Odette","Sandrone","Qiqi","Alyosha"]}] } },
 { id:"sandrone", nom:"Sandrone", element:"Cryo", arme:"Claymore", rarete:5, region:"Snezhnaya", role:"DPS principal", tier:"T0",
-  bio:"Septième des Onze Harbingers des Fatui, dite la Marionnettiste. Elle lit le monde à travers les mathématiques et tient des réceptions au thé." },
+  bio:"Septième des Onze Harbingers des Fatui, dite la Marionnettiste. Elle lit le monde à travers les mathématiques et tient des réceptions au thé." ,
+  build:{ armes:["Une cuillerée de transcendance (signature)","Mille soleils brûlants","Brise-pierre de corne rouge","Condamneur","Fleur de mailles","Ombre tidale"],
+    artefacts:["Désenchantement dans l'ombre profonde (4p)","Rêve doré (4p)","2p Rideau du Gladiateur + 2p Journée sculptée par les vents ascendants"],
+    stats:{sablier:"ATQ% ou Maîtrise élémentaire",coupe:"ATQ% ou Maîtrise élémentaire",couronne:"DGT CRIT ou Taux CRIT"},
+    substats:["Recharge d'Énergie","DGT CRIT","Taux CRIT","ATQ%","Maîtrise élémentaire"], talents:["Attaque normale","Déchaînement","Compétence"],
+    conseil:"Sa coupe monte en ATQ% ou Maîtrise, pas en Bonus DGT Cryo : elle joue les réactions Stellaires, qu'il lui faut un allié Electro pour déclencher.",
+    equipes:[{nom:"Stellaire Zhongli",membres:["Sandrone","Yae Miko","Zhongli","Qiqi"]},{nom:"Stellaire Beidou",membres:["Sandrone","Yae Miko","Zhongli","Beidou"]}] } },
 { id:"tartaglia", nom:"Tartaglia", element:"Hydro", arme:"Arc", rarete:5, region:"Snezhnaya", role:"DPS principal",
-  bio:"Onzième des Onze Harbingers des Fatui, dit Childe. Guerrier compulsif, et grand frère dévoué d'une fratrie qui ignore tout de son métier." },
+  bio:"Onzième des Onze Harbingers des Fatui, dit Childe. Guerrier compulsif, et grand frère dévoué d'une fratrie qui ignore tout de son métier." ,
+  build:{ armes:["Étoile polaire","La voie du chasseur","Simulacre d'eau","Ailes de la Voûte d'Azur","Pulsation du tonnerre","Arc rouillé"],
+    artefacts:["Rêve de la nymphe (4p)","Âme des profondeurs (4p)","2p Bonus DGT Hydro + 2p ATQ%"],
+    stats:{sablier:"ATQ%",coupe:"Bonus DGT Hydro",couronne:"Taux CRIT ou DGT CRIT"},
+    substats:["Taux CRIT","DGT CRIT","ATQ%","Maîtrise élémentaire","Recharge d'Énergie"], talents:["Compétence","Déchaînement","Attaque normale"],
+    conseil:"Sa compétence le passe en mêlée et son temps de recharge dépend de la durée passée dedans : sors-en avant la fin pour ne pas subir les 45 secondes complètes.",
+    equipes:[{nom:"Hyperbloom",membres:["Tartaglia","Nahida","Xingqiu","Kuki Shinobu"]},{nom:"Vaporize",membres:["Tartaglia","Nahida","Kaedehara Kazuha","Bennett"]}] } },
 
 /* ========================= AUTRES ========================= */
 { id:"aloy", nom:"Aloy", element:"Cryo", arme:"Arc", rarete:5, region:"Autre", role:"Sous-DPS",
-  bio:"Chasseuse venue d'un autre monde, personnage invité de la série Horizon. Obtenue gratuitement, hors système de vœux." },
+  bio:"Chasseuse venue d'un autre monde, personnage invité de la série Horizon. Obtenue gratuitement, hors système de vœux." ,
+  build:{ armes:["Pulsation du tonnerre","Étoile polaire","Ailes de la Voûte d'Azur","Dernière corde","Arc d'Amos","Croissant (prototype)"],
+    artefacts:["Briseur de glace (4p)","Emblème du destin brisé (4p)","Ancien rituel royal (4p)","2p Ancien rituel royal + 2p Briseur de glace"],
+    stats:{sablier:"ATQ% ou Maîtrise élémentaire",coupe:"Bonus DGT Cryo",couronne:"Taux CRIT ou DGT CRIT"},
+    substats:["Taux CRIT","DGT CRIT","ATQ%","Maîtrise élémentaire","Recharge d'Énergie"], talents:["Déchaînement","Compétence","Attaque normale"],
+    conseil:"Personnage invité de Horizon, obtenu gratuitement et bloqué au niveau de talents 1 : ne compte pas dessus comme DPS principal, ses multiplicateurs ne montent pas.",
+    equipes:[{nom:"Melt",membres:["Aloy","Xiangling","Kaedehara Kazuha","Diona"]},{nom:"Melt Chongyun",membres:["Aloy","Xiangling","Chongyun","Bennett"]}] } },
 { id:"skirk", nom:"Skirk", element:"Cryo", arme:"Épée", rarete:5, region:"Autre", role:"DPS principal", tier:"T0.5",
   bio:"Épéiste venue d'ailleurs, maîtresse d'armes de Tartaglia après sa chute dans l'Abîme. Disciple du Roi Renard des Abysses.",
   build:{ armes:["Éclazur (signature)","Lune ondulante de Futsu","Reflet de tranche-brume","Coupeur de jade primordial","La calamité d'Eshu"],
@@ -908,147 +1008,7 @@ const PERSONNAGES = [
     conseil:"Elle a besoin d'alliés Hydro ou Cryo pour générer ses Failles du Vide : une équipe sans eux la prive de sa mécanique principale.",
     equipes:[{nom:"Permafrost",membres:["Skirk","Shenhe","Furina","Escoffier"]},{nom:"Freeze",membres:["Skirk","Citlali","Furina","Escoffier"]}] } },
 { id:"voyageur", nom:"Voyageur", element:"Polyvalent", arme:"Épée", rarete:5, region:"Autre", role:"Polyvalent",
+  bio:"Aether ou Lumine, protagoniste venu d'un autre monde à la recherche de son jumeau. Change d'élément en résonnant avec les Statues des Sept — sept versions jouables au total.",
+  note:"Le Voyageur n'a pas un build mais sept, un par élément, avec des armes, des artefacts et des rôles totalement différents. Le Voyageur Dendro se joue en Maîtrise élémentaire pour les réactions, le Voyageur Geo en DEF, l'Anemo en Swirl. Les mettre sur une seule fiche n'aiderait personne : ils méritent sept fiches séparées, à faire." }
 
-   bio:"Aether ou Lumine, protagoniste venu d'un autre monde à la recherche de son jumeau. Change d'élément en résonnant avec les Statues des Sept — sept versions jouables au total." }
 ];
-/* ===== 14 builds ajoutés le 13/09/2026 ===== */
-
-Object.assign(PERSONNAGES.find(p => p.id === "ororon"), { build: {
-  armes: ["Étoile polaire","La première grande magie","Pulsation du tonnerre","Simulacre d'eau","Ailes de la Voûte d'Azur"],
-  artefacts: ["Parchemin du héros de la Cité de braise (4p)","Ancien rituel royal (4p)","Emblème du destin brisé (4p)","Codex d'obsidienne (4p)"],
-  stats: { sablier: "Maîtrise élémentaire ou Recharge d'Énergie", coupe: "Maîtrise élémentaire", couronne: "Maîtrise élémentaire" },
-  substats: ["Recharge d'Énergie","Taux CRIT","DGT CRIT","ATQ%","Maîtrise élémentaire"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Full Maîtrise élémentaire sur les trois pièces : il vit des réactions, pas de ses dégâts propres. Son Déchaînement applique de l'Electro hors terrain pendant toute la rotation.",
-  equipes: [{ nom: "Multi-réactions", membres: ["Ororon","Chasca","Furina","Bennett"] }, { nom: "Electro-Chargé", membres: ["Ororon","Clorinde","Furina","Xilonen"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "varesa"), { build: {
-  armes: ["Notions colorées","Reliquaire de la vérité","Vérité de Kagura","L'origine des Quatre Vents","Tome du flux éternel","Instant surfant"],
-  artefacts: ["Serment de la longue nuit (4p)","Codex d'obsidienne (4p)","Chasseur de la Maréchaussée (4p)","Cœur du Voyageur (4p)"],
-  stats: { sablier: "ATQ%", coupe: "Bonus DGT Electro", couronne: "Taux CRIT ou DGT CRIT" },
-  substats: ["Recharge d'Énergie","Taux CRIT","DGT CRIT","ATQ%"],
-  talents: ["Attaque normale","Déchaînement","Compétence"],
-  conseil: "Ses dégâts passent par les attaques plongeantes de son état Nuitâme, pas par sa compétence : monte l'attaque normale en premier, c'est elle qui porte le plongeon.",
-  equipes: [{ nom: "Surcharge Mavuika", membres: ["Varesa","Mavuika","Chevreuse","Iansan"] }, { nom: "Surcharge Bennett", membres: ["Varesa","Bennett","Chevreuse","Iansan"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "aino"), { build: {
-  armes: ["Espadon de Favonius","Aigue-marine de Makhaira","Perception forgée par les flammes","Clé universelle","Espadon rituel","Fluorescence"],
-  artefacts: ["Sérénade de la lune soyeuse (4p)","Ancien rituel royal (4p)","Parchemin du héros de la Cité de braise (4p)","Instructeur (4p)"],
-  stats: { sablier: "Recharge d'Énergie ou Maîtrise élémentaire", coupe: "Maîtrise élémentaire", couronne: "Maîtrise élémentaire ou Taux CRIT" },
-  substats: ["Recharge d'Énergie","Maîtrise élémentaire","Taux CRIT"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Applicatrice Hydro hors terrain, à jouer en Maîtrise élémentaire. Elle porte le Signe Lunaire, ce qui débloque le multiplicateur de Flins et des autres Lunaire-Chargé.",
-  equipes: [{ nom: "Vaporize Hu Tao", membres: ["Aino","Hu Tao","Furina","Citlali"] }, { nom: "Vaporize Yoimiya", membres: ["Aino","Yoimiya","Yelan","Ineffa"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "illuga"), { build: {
-  armes: ["Lance de Favonius","Fléau du dragon","Lance en croix de Kitain","Lumière du faucheur","Berge de la Voûte d'Azur","Guisarme stellaire (prototype)"],
-  artefacts: ["Sérénade de la lune soyeuse (4p)","Cœur du Voyageur (4p)","2p Nuit de la révélation céleste + 2p Bande vagabonde"],
-  stats: { sablier: "Maîtrise élémentaire ou Recharge d'Énergie", coupe: "Maîtrise élémentaire", couronne: "Maîtrise élémentaire" },
-  substats: ["Recharge d'Énergie","Maîtrise élémentaire","Taux CRIT"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Support Geo full Maîtrise élémentaire, ce qui est contre-intuitif pour un Geo : il sert les réactions Lunaire-Cristallisation, pas les dégâts bruts.",
-  equipes: [{ nom: "Lunaire-Cristallisation", membres: ["Illuga","Zibai","Columbina","Gorou"] }, { nom: "Lunaire-Cristallisation Zhongli", membres: ["Illuga","Zibai","Columbina","Zhongli"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "jahoda"), { build: {
-  armes: ["Arc de chasse de Favonius","Ultime soupir","Arc pluvial du serpent arc-en-ciel","Crochet de capture","Ailes de la Voûte d'Azur","Arc d'Amos"],
-  artefacts: ["Ombre de la Verte Chasseuse (4p)","Sérénade de la lune soyeuse (4p)","Souvenir de forêt (4p)","Cœur du Voyageur (4p)"],
-  stats: { sablier: "Recharge d'Énergie", coupe: "ATQ%", couronne: "Bonus de Soin" },
-  substats: ["Recharge d'Énergie","ATQ%","Taux CRIT","Maîtrise élémentaire"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Soin continu et réactions hors terrain dans le même Déchaînement : sablier en Recharge d'Énergie obligatoire, sinon rien ne tourne.",
-  equipes: [{ nom: "Lunaire-Chargé", membres: ["Jahoda","Flins","Aino","Ineffa"] }, { nom: "Lunaire-Chargé Fischl", membres: ["Jahoda","Flins","Aino","Fischl"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "linnea"), { build: {
-  armes: ["Serment de gel doré (signature)","Ultime soupir","Simulacre d'eau","La voie du chasseur","Lance-pierres (F2P)","Plumage cramoisi du vautour astral"],
-  artefacts: ["Aubade d'astre et de lune (4p)","Coquille des rêves opulents (4p)","Cœur du Voyageur (4p)","2p Coquille des rêves opulents + 2p Maîtrise élémentaire +80"],
-  stats: { sablier: "DEF% ou Recharge d'Énergie", coupe: "DEF%", couronne: "Taux CRIT ou DGT CRIT" },
-  substats: ["Taux CRIT","DGT CRIT","DEF%","Maîtrise élémentaire","Recharge d'Énergie"],
-  talents: ["Compétence","Déchaînement","Attaque normale"],
-  conseil: "Elle scale sur la DEF : coupe en DEF%, jamais en Bonus DGT Geo. Ses dégâts passent par sa créature Lumi, qui reste sur le terrain après le changement.",
-  equipes: [{ nom: "Lunaire-Cristallisation", membres: ["Linnea","Zibai","Columbina","Gorou"] }, { nom: "Éclat Lunaire", membres: ["Linnea","Zibai","Illuga","Aino"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "nefer"), { build: {
-  armes: ["Reliquaire de la vérité","Rappel de la nocturne","Miroir du tisse-nuit","Matinée flânée sous le soleil","Veillée d'appel d'étoiles","Lanterne à moelle sombre"],
-  artefacts: ["Nuit de la révélation céleste (4p)","Cœur du Voyageur (4p)","2p Nuit de la révélation céleste + 2p Bande vagabonde","2p Rêve doré + 2p Nuit de la révélation céleste"],
-  stats: { sablier: "Maîtrise élémentaire", coupe: "Maîtrise élémentaire", couronne: "Taux CRIT ou DGT CRIT" },
-  substats: ["Taux CRIT","DGT CRIT","Maîtrise élémentaire"],
-  talents: ["Compétence","Déchaînement","Attaque normale"],
-  conseil: "Cas rare : sablier ET coupe en Maîtrise élémentaire, mais couronne en CRIT. Elle convertit les Bloom classiques en Lunar Bloom, qui eux peuvent faire des coups critiques.",
-  equipes: [{ nom: "Lunar Bloom #1", membres: ["Nefer","Lauma","Yaoyao","Aino"] }, { nom: "Lunar Bloom #2", membres: ["Nefer","Lauma","Nilou","Diona"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "nicole"), { build: {
-  armes: ["Heptades des anges","Chaînes mortelles","Écho de la grue","Atlas de la Voûte d'Azur","Veillée d'appel d'étoiles","Œil d'assermentation"],
-  artefacts: ["Don céleste (4p)","Parchemin du héros de la Cité de braise (4p)","Ancien rituel royal (4p)","2p ATQ% + 2p ATQ%"],
-  stats: { sablier: "Recharge d'Énergie ou ATQ%", coupe: "ATQ%", couronne: "ATQ% ou Taux CRIT" },
-  substats: ["Recharge d'Énergie","ATQ%","Taux CRIT"],
-  talents: ["Compétence","Déchaînement","Attaque normale"],
-  conseil: "Bouclier et buff d'ATQ scalent sur son propre ATQ : construis-la en ATQ pur, le CRIT ne lui sert à rien.",
-  equipes: [{ nom: "Swirl Varka", membres: ["Nicole","Varka","Prune","Bennett"] }, { nom: "Swirl Durin", membres: ["Nicole","Varka","Prune","Durin"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "prune"), { build: {
-  armes: ["Code de Favonius","Heptades des anges","Écho de la grue","Atlas de la Voûte d'Azur","Chaînes mortelles","Œil d'assermentation"],
-  artefacts: ["Ombre de la Verte Chasseuse (4p)","Don céleste (4p)","Ancien rituel royal (4p)"],
-  stats: { sablier: "Recharge d'Énergie ou ATQ%", coupe: "ATQ%", couronne: "ATQ% ou Taux CRIT" },
-  substats: ["Recharge d'Énergie","ATQ%","Taux CRIT"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Coupe en ATQ% et non en Bonus DGT Anemo : comme les autres supports Anemo, elle buffe l'équipe plutôt que de frapper elle-même.",
-  equipes: [{ nom: "Swirl Varka", membres: ["Prune","Varka","Venti","Klee"] }, { nom: "Aggravate", membres: ["Prune","Clorinde","Fischl","Kirara"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "alyosha"), { build: {
-  armes: ["Lumière du faucheur","Lance de Favonius","Tamayuratei no Ohanashi","Chant de la veillée","Berge de la Voûte d'Azur","« La prise »"],
-  artefacts: ["Ancien rituel royal (4p)","Cœur de la fournaise (4p)","2p Rideau du Gladiateur + 2p Journée sculptée par les vents ascendants"],
-  stats: { sablier: "ATQ% ou Recharge d'Énergie", coupe: "ATQ%", couronne: "ATQ% ou Taux CRIT" },
-  substats: ["Recharge d'Énergie","ATQ%","Taux CRIT"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Buff et soin liés aux réactions Stellaires, calculés sur son ATQ : ATQ pur, pas de CRIT. Il lui faut un partenaire Cryo pour que le Stellaire se déclenche.",
-  equipes: [{ nom: "Stellaire Yae Miko", membres: ["Alyosha","Sandrone","Yae Miko","Odette"] }, { nom: "Stellaire Qiqi", membres: ["Alyosha","Sandrone","Qiqi","Odette"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "odette"), { build: {
-  armes: ["Plume hivernale du lac blanc (signature)","Éclazur","Serment de la liberté","Final des profondeurs","Puits-de-braises","Épée du faucon"],
-  artefacts: ["Cœur de la fournaise (4p)","Désenchantement dans l'ombre profonde (4p)","2p Rideau du Gladiateur + 2p Journée sculptée par les vents ascendants"],
-  stats: { sablier: "ATQ%", coupe: "ATQ%", couronne: "Taux CRIT ou DGT CRIT" },
-  substats: ["DGT CRIT","Taux CRIT","ATQ%","Recharge d'Énergie","Maîtrise élémentaire"],
-  talents: ["Compétence","Déchaînement","Attaque normale"],
-  conseil: "Coupe en ATQ% et non en Bonus DGT Cryo : ses dégâts viennent des réactions Stellaires, qui ne profitent pas du bonus élémentaire.",
-  equipes: [{ nom: "Stellaire Hypercarry", membres: ["Odette","Sandrone","Yae Miko","Alyosha"] }, { nom: "Stellaire Qiqi", membres: ["Odette","Sandrone","Qiqi","Alyosha"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "sandrone"), { build: {
-  armes: ["Une cuillerée de transcendance (signature)","Mille soleils brûlants","Brise-pierre de corne rouge","Condamneur","Fleur de mailles","Ombre tidale"],
-  artefacts: ["Désenchantement dans l'ombre profonde (4p)","Rêve doré (4p)","2p Rideau du Gladiateur + 2p Journée sculptée par les vents ascendants"],
-  stats: { sablier: "ATQ% ou Maîtrise élémentaire", coupe: "ATQ% ou Maîtrise élémentaire", couronne: "DGT CRIT ou Taux CRIT" },
-  substats: ["Recharge d'Énergie","DGT CRIT","Taux CRIT","ATQ%","Maîtrise élémentaire"],
-  talents: ["Attaque normale","Déchaînement","Compétence"],
-  conseil: "Sa coupe monte en ATQ% ou Maîtrise, pas en Bonus DGT Cryo : elle joue les réactions Stellaires, qu'il lui faut un allié Electro pour déclencher.",
-  equipes: [{ nom: "Stellaire Zhongli", membres: ["Sandrone","Yae Miko","Zhongli","Qiqi"] }, { nom: "Stellaire Beidou", membres: ["Sandrone","Yae Miko","Zhongli","Beidou"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "tartaglia"), { build: {
-  armes: ["Étoile polaire","La voie du chasseur","Simulacre d'eau","Ailes de la Voûte d'Azur","Pulsation du tonnerre","Arc rouillé"],
-  artefacts: ["Rêve de la nymphe (4p)","Âme des profondeurs (4p)","2p Bonus DGT Hydro + 2p ATQ%"],
-  stats: { sablier: "ATQ%", coupe: "Bonus DGT Hydro", couronne: "Taux CRIT ou DGT CRIT" },
-  substats: ["Taux CRIT","DGT CRIT","ATQ%","Maîtrise élémentaire","Recharge d'Énergie"],
-  talents: ["Compétence","Déchaînement","Attaque normale"],
-  conseil: "Sa compétence le passe en mêlée et son temps de recharge dépend de la durée passée dedans : sors-en avant la fin pour ne pas subir les 45 secondes complètes.",
-  equipes: [{ nom: "Hyperbloom", membres: ["Tartaglia","Nahida","Xingqiu","Kuki Shinobu"] }, { nom: "Vaporize", membres: ["Tartaglia","Nahida","Kaedehara Kazuha","Bennett"] }]
-} });
-
-Object.assign(PERSONNAGES.find(p => p.id === "aloy"), { build: {
-  armes: ["Pulsation du tonnerre","Étoile polaire","Ailes de la Voûte d'Azur","Dernière corde","Arc d'Amos","Croissant (prototype)"],
-  artefacts: ["Briseur de glace (4p)","Emblème du destin brisé (4p)","Ancien rituel royal (4p)","2p Ancien rituel royal + 2p Briseur de glace"],
-  stats: { sablier: "ATQ% ou Maîtrise élémentaire", coupe: "Bonus DGT Cryo", couronne: "Taux CRIT ou DGT CRIT" },
-  substats: ["Taux CRIT","DGT CRIT","ATQ%","Maîtrise élémentaire","Recharge d'Énergie"],
-  talents: ["Déchaînement","Compétence","Attaque normale"],
-  conseil: "Personnage invité de Horizon, obtenu gratuitement et bloqué au niveau de talents 1 : ne compte pas dessus comme DPS principal, ses multiplicateurs ne montent pas.",
-  equipes: [{ nom: "Melt", membres: ["Aloy","Xiangling","Kaedehara Kazuha","Diona"] }, { nom: "Melt Chongyun", membres: ["Aloy","Xiangling","Chongyun","Bennett"] }]
-} });
