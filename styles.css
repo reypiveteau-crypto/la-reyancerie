@@ -242,15 +242,29 @@ p { margin: 0; }
 .card.avec-fond .card-role { color: #b7bedd; }
 .card.avec-fond .el-badge { background: rgba(8,11,22,.62); backdrop-filter: blur(3px); }
 
-/* sur la fiche : un bandeau en haut, qui se fond vers le bas */
+/* sur la fiche : un portrait à droite, dans ses vraies proportions, qui se fond
+   dans le ciel par un halo ovale. Il passe DERRIÈRE les blocs de texte, rendus
+   opaques juste en dessous — sinon l'illustration transparaît sous la bio. */
 .detail.avec-fond .fond {
-  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-  width: 100vw; max-width: none; height: 330px;
-  opacity: .42;
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 52%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 52%, transparent 100%);
+  position: absolute; top: 0; right: 0; left: auto;
+  width: min(40%, 440px); height: 430px;
+  max-width: none;
+  object-fit: cover; object-position: center 10%;
+  opacity: .6;
+  mask-image: radial-gradient(ellipse 66% 60% at 52% 42%,
+    #000 0%, rgba(0,0,0,.55) 55%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 66% 60% at 52% 42%,
+    #000 0%, rgba(0,0,0,.55) 55%, transparent 80%);
 }
 .detail.avec-fond > *:not(.fond) { position: relative; z-index: 1; }
+/* blocs opaques uniquement sur les fiches qui ont une image */
+.detail.avec-fond .bio { background: #10152a; }
+.detail.avec-fond .conseil { background: color-mix(in srgb, var(--gold) 7%, #151b33); }
+.detail.avec-fond .panel { background: #151b33; }
+/* sur mobile, le portrait passerait derrière le texte : on le retire */
+@media (max-width: 720px) {
+  .detail.avec-fond .fond { display: none; }
+}
 .card-flags { display: flex; align-items: center; gap: 6px; }
 .tier {
   font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
