@@ -908,7 +908,9 @@ const PERSONNAGES = [
     equipes:[{nom:"Permafrost",membres:["Skirk","Shenhe","Furina","Escoffier"]},{nom:"Freeze",membres:["Skirk","Citlali","Furina","Escoffier"]}] } },
 { id:"voyageur", nom:"Voyageur", element:"Polyvalent", arme:"Épée", rarete:5, region:"Autre", role:"Polyvalent",
 
- /* ===== 14 builds ajoutés le 13/09/2026 ===== */
+   bio:"Aether ou Lumine, protagoniste venu d'un autre monde à la recherche de son jumeau. Change d'élément en résonnant avec les Statues des Sept — sept versions jouables au total." }
+];
+/* ===== 14 builds ajoutés le 13/09/2026 ===== */
 
 Object.assign(PERSONNAGES.find(p => p.id === "ororon"), { build: {
   armes: ["Étoile polaire","La première grande magie","Pulsation du tonnerre","Simulacre d'eau","Ailes de la Voûte d'Azur"],
@@ -1049,6 +1051,3 @@ Object.assign(PERSONNAGES.find(p => p.id === "aloy"), { build: {
   conseil: "Personnage invité de Horizon, obtenu gratuitement et bloqué au niveau de talents 1 : ne compte pas dessus comme DPS principal, ses multiplicateurs ne montent pas.",
   equipes: [{ nom: "Melt", membres: ["Aloy","Xiangling","Kaedehara Kazuha","Diona"] }, { nom: "Melt Chongyun", membres: ["Aloy","Xiangling","Chongyun","Bennett"] }]
 } });
-  bio:"Aether ou Lumine, protagoniste venu d'un autre monde à la recherche de son jumeau. Change d'élément en résonnant avec les Statues des Sept — sept versions jouables au total." }
-
-];
