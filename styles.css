@@ -464,7 +464,7 @@ dl { margin: 0; }
   object-fit: cover !important;
   object-position: center 15% !important;
   transform: none !important;
-  opacity: .5 !important;
+  opacity: .65 !important;
   -webkit-mask-image: radial-gradient(ellipse 115% 95% at 70% 28%,
     #000 22%, rgba(0,0,0,.5) 55%, transparent 78%) !important;
   mask-image: radial-gradient(ellipse 115% 95% at 70% 28%,
