@@ -1,7 +1,7 @@
 /* ===== La Reyancerie — feuille de style =====
-   Parti pris : pas de portraits de personnages (droits HoYoverse).
-   L'identité repose sur les crêtes d'élément, les couleurs de région
-   et le traitement de la rareté. ============================= */
+   L'identité repose sur les crêtes d'élément, les couleurs de région et le
+   traitement de la rareté. Une image de personnage peut venir en fond de carte
+   (champ `image` dans data.js) ; tout reste lisible sans. ==================== */
 
 :root {
   --bg: #070a14;
@@ -217,16 +217,40 @@ p { margin: 0; }
 }
 .el-badge.big { width: 56px; height: 56px; border-radius: 15px; }
 
-/* vignette de personnage, quand une image est fournie */
-.el-badge { position: relative; overflow: hidden; }
-.el-badge .portrait {
+/* ---------- Image de personnage en fond ----------
+   L'image remplit la carte ; un dégradé sombre passe par-dessus pour que
+   le texte et la crête d'élément restent lisibles. */
+.card .fond, .detail .fond {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  object-fit: cover; display: block;
+  object-fit: cover; object-position: center 22%;
+  z-index: 0; display: block;
 }
-.el-badge.avec-image { background: var(--surface-2); border-color: color-mix(in srgb, var(--el) 60%, transparent); }
-.el-badge.avec-image svg { display: none; }
-.el-badge.big.avec-image { width: 84px; height: 84px; border-radius: 18px; }
+.card.avec-fond .fond { opacity: .62; }
+.card.avec-fond::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(6,9,18,.42) 0%, rgba(6,9,18,.72) 38%, rgba(6,9,18,.93) 72%, rgba(6,9,18,.98) 100%);
+}
+.card.avec-fond > *:not(.fond) { position: relative; z-index: 1; }
+.card.avec-fond:hover .fond { opacity: .80; }
+/* sur une image, le texte a besoin d'un peu d'ombre pour rester net */
+.card.avec-fond h3,
+.card.avec-fond .card-meta,
+.card.avec-fond .card-foot { text-shadow: 0 1px 8px rgba(4,6,14,.95); }
+.card.avec-fond .card-region { color: color-mix(in srgb, var(--rg) 80%, #fff); }
+.card.avec-fond .card-role { color: #b7bedd; }
+.card.avec-fond .el-badge { background: rgba(8,11,22,.62); backdrop-filter: blur(3px); }
+
+/* sur la fiche : un bandeau en haut, qui se fond vers le bas */
+.detail.avec-fond .fond {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100vw; max-width: none; height: 330px;
+  opacity: .42;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 52%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 52%, transparent 100%);
+}
+.detail.avec-fond > *:not(.fond) { position: relative; z-index: 1; }
 .card-flags { display: flex; align-items: center; gap: 6px; }
 .tier {
   font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
@@ -253,7 +277,7 @@ p { margin: 0; }
 .empty { grid-column: 1/-1; text-align: center; color: var(--faint); padding-block: 60px; }
 
 /* ---------- Fiche ---------- */
-.detail { padding-block: 26px 70px; }
+.detail { padding-block: 26px 70px; position: relative; }
 .back {
   background: none; border: 1px solid var(--line); color: var(--muted);
   border-radius: 999px; padding: 7px 15px; font-size: 13px; cursor: pointer;
