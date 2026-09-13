@@ -434,7 +434,7 @@ dl { margin: 0; }
    --decal : décalage horizontal, positif = vers la droite */
 .card.avec-fond .fond,
 .detail.avec-fond .fond {
-  --zoom: 1.8;
+  --zoom: 1.9;
   --decal: 10%;
   transform: translateX(var(--decal)) scale(var(--zoom));
   transform-origin: center 18%;
