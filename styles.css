@@ -432,8 +432,8 @@ dl { margin: 0; }
 /* Cache le nom et les étoiles incrustés dans les images */
 .card.avec-fond .fond,
 .detail.avec-fond .fond {
-  --zoom: 1.45;
-  --decal: 15%;
+  --zoom: 1.55;
+  --decal: 0%;
   --haut: 0%;
   transform: translate(var(--decal), var(--haut)) scale(var(--zoom));
   transform-origin: center 18%;
