@@ -430,6 +430,6 @@ dl { margin: 0; }
   .conseil { flex-direction: column; gap: 7px; }
 }
 
-/* 4★ en violet foncé, 5★ en or */
+/* rareté : 4★ en violet foncé, 5★ en or */
 .stars { color: #7b52b8; }
 .stars.s5 { color: var(--gold); }
