@@ -38,7 +38,7 @@
    Un id absent de cette liste = carte normale, sans image. Rien ne casse.
    ============================================================ */
 const AVEC_IMAGE = [
-  "albedo","amber"
+  "albedo","amber","barbara","benett","dahlia","diluc","diona","durin","eula","fischl"
 ];
 
 const VERSION_JEU = "7.0";
