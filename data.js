@@ -1009,4 +1009,6 @@ const PERSONNAGES = [
     equipes:[{nom:"Permafrost",membres:["Skirk","Shenhe","Furina","Escoffier"]},{nom:"Freeze",membres:["Skirk","Citlali","Furina","Escoffier"]}] } },
 { id:"voyageur", nom:"Voyageur", element:"Polyvalent", arme:"Épée", rarete:5, region:"Autre", role:"Polyvalent",
   bio:"Aether ou Lumine, protagoniste venu d'un autre monde à la recherche de son jumeau. Change d'élément en résonnant avec les Statues des Sept — sept versions jouables au total.",
-  note:"Le Voyageur n'a pas un build mais sept, un par élément, avec des armes, des artefacts et des rôles totalement différents. Le Voyageur Dendro se joue en Maîtrise élémentaire pour les réactions, le Voyageur Geo en DEF, l'Anemo en Swirl. Les mettre sur une seule fiche 
+  note:"Le Voyageur n'a pas un build mais sept, un par élément, avec des armes, des artefacts et des rôles totalement différents. Le Voyageur Dendro se joue en Maîtrise élémentaire pour les réactions, le Voyageur Geo en DEF, l'Anemo en Swirl. Les mettre sur une seule fiche n'aiderait personne : ils méritent sept fiches séparées, à faire." }
+
+];
