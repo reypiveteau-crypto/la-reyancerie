@@ -58,6 +58,17 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;
 
 const avecBuild = PERSONNAGES.filter(p => p.build).length;
 
+/* Quelle image pour ce personnage ?
+   Priorité au champ `image` de sa fiche, sinon on regarde la liste AVEC_IMAGE.
+   Renvoie null si le personnage n'a pas d'image : la carte reste normale. */
+function imageDe(p) {
+  if (p.image) return p.image;
+  if (typeof AVEC_IMAGE === "undefined") return null;
+  const e = AVEC_IMAGE.find(x => x === p.id || x.startsWith(p.id + "."));
+  if (!e) return null;
+  return e.includes(".") ? e : e + ".png";
+}
+
 /* ---------- Lecture d'un set d'artefacts ----------
    Transforme la chaîne écrite dans data.js en quelque chose d'affichable :
      "Troupe dorée (4p)"                        → 4 pièces de Troupe dorée
@@ -190,10 +201,11 @@ function vueListe() {
 }
 
 function carte(p) {
+  const img = imageDe(p);
   return `
-    <button class="card ${p.rarete === 5 ? "is-5" : ""}${p.image ? " avec-fond" : ""}" data-id="${p.id}"
+    <button class="card ${p.rarete === 5 ? "is-5" : ""}${img ? " avec-fond" : ""}" data-id="${p.id}"
             style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
-      ${p.image ? `<img class="fond" src="${esc(p.image)}" alt="">` : ""}
+      ${img ? `<img class="fond" src="${esc(img)}" alt="" loading="lazy" decoding="async">` : ""}
       <span class="card-rail"></span>
       <div class="card-top">
         <span class="el-badge">${svgEl(p.element)}</span>
@@ -216,10 +228,10 @@ function carte(p) {
 
 /* ---------- Vue fiche ---------- */
 function vueFiche(p) {
-  const b = p.build;
+  const b = p.build, img = imageDe(p);
   app.innerHTML = `
-    <article class="detail${p.image ? " avec-fond" : ""}" style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
-      ${p.image ? `<img class="fond" src="${esc(p.image)}" alt="Portrait de ${esc(p.nom)}">` : ""}
+    <article class="detail${img ? " avec-fond" : ""}" style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
+      ${img ? `<img class="fond" src="${esc(img)}" alt="Portrait de ${esc(p.nom)}" decoding="async">` : ""}
       <button class="back" id="back">← Tous les personnages</button>
 
       <header class="detail-head">
