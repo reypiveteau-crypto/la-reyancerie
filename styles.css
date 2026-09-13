@@ -429,3 +429,10 @@ dl { margin: 0; }
   .stat-row dd { text-align: left; }
   .conseil { flex-direction: column; gap: 7px; }
 }
+/* Recadrage des images de personnage */
+.card.avec-fond .fond,
+.detail.avec-fond .fond {
+  transform: scale(1.45);
+  transform-origin: center 18%;
+}
+.detail.avec-fond .fond { transform: translateX(-50%) scale(1.45); }
