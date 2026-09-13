@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Reyancerie — tous les personnages de Genshin Impact en français</title>
+<meta name="description" content="Les 119 personnages jouables de Genshin Impact en français : qui ils sont, leur élément, leur arme, et les builds détaillés (armes, artefacts, stats, équipes) en version 7.0.">
+<meta name="theme-color" content="#0b0e18">
+<meta property="og:title" content="La Reyancerie — personnages et builds Genshin Impact en français">
+<meta property="og:description" content="119 fiches personnages, builds vérifiés, noms d'armes et d'artefacts en français officiel.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- le ciel : deux calques dessinés en canvas (voir ciel.js) -->
+<canvas id="aurore" aria-hidden="true"></canvas>
+<canvas id="ciel" aria-hidden="true"></canvas>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+          <path d="M12 2 21 7.2v9.6L12 22l-9-5.2V7.2L12 2Zm0 2.3L5 8.4v7.2l7 4.1 7-4.1V8.4l-7-4.1Zm0 3.2 4 2.3v4.4l-4 2.3-4-2.3v-4.4l4-2.3Z"/>
+        </svg>
+      </span>
+      <span class="brand-name">LA <span>REYANCERIE</span></span>
+    </a>
+    <span class="header-tag">Version <b>7.0</b> · Septembre 2026</span>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Site de fan non officiel. Genshin Impact est une marque de HoYoverse ; ce site n'est ni affilié ni soutenu par HoYoverse.</p>
+    <p>Noms d'armes et d'artefacts en français officiel. Builds relevés en septembre 2026 sur
+       genshin-builds.com, prydwen.gg et game8.co. Un personnage sans build affiché est un personnage
+       dont le build n'a pas encore été vérifié — rien n'est inventé ici.</p>
+    <p>Aucun asset du jeu n'est utilisé : les pictogrammes d'éléments et d'armes sont des formes
+       originales dessinées pour ce site.</p>
+  </div>
+</footer>
+
+<script src="ciel.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
