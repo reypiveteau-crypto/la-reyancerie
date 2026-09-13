@@ -31,7 +31,8 @@ const PERSONNAGES = [
 
 /* ========================= MONDSTADT ========================= */
 { id:"albedo", nom:"Albedo", element:"Geo", arme:"Épée", rarete:5, region:"Mondstadt", role:"Sous-DPS",
-  bio:"Alchimiste en chef des Chevaliers de Favonius. Créature synthétique créée par l'alchimiste Rhinedottir, il étudie le monde avec un détachement clinique." ,
+    image: "albedo.png.png",
+ bio:"Alchimiste en chef des Chevaliers de Favonius. Créature synthétique créée par l'alchimiste Rhinedottir, il étudie le monde avec un détachement clinique." ,
   build:{ armes:["Chanson de patrouille de sommet","Uraku Misugiri","Éclat lunaire luminescent","Flûte d'ezpitzal","Fuseau de cinabre","Messager de l'Aube"],
     artefacts:["Coquille des rêves opulents (4p)","Troupe dorée (4p)","Ténacité du Millelithe (4p)","2p Roche ancienne + 2p DEF%"],
     stats:{sablier:"DEF%",coupe:"Bonus DGT Geo (ou DEF% au-delà de 3000 DEF)",couronne:"Taux CRIT ou DGT CRIT"},
