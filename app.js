@@ -316,4 +316,20 @@ function panneauxBuild(p, b) {
 function brancherImages() {
   app.querySelectorAll("img.fond").forEach(img => {
     img.addEventListener("error", () => {
-   
+      img.closest(".avec-fond")?.classList.remove("avec-fond");
+      img.remove();
+    });
+  });
+}
+
+/* ---------- Routeur ---------- */
+function router() {
+  const id = location.hash.replace("#/", "");
+  const p = PERSONNAGES.find(x => x.id === id);
+  if (p) { vueFiche(p); document.title = `${p.nom} — La Reyancerie`; }
+  else { vueListe(); document.title = "La Reyancerie — tous les personnages de Genshin Impact en français"; }
+  window.scrollTo(0, 0);
+}
+
+window.addEventListener("hashchange", router);
+router();
