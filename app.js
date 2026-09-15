@@ -101,10 +101,33 @@ function lireSet(txt) {
 
 const RANGS = ["Meilleur choix", "Bonne alternative", "Correct aussi", "Dépannage"];
 
+/* ---------- Icône d'un set d'artefacts ----------
+   L'image se range dans le dossier artefacts/, nommée d'après le nom du set :
+   minuscules, sans accent, tirets à la place des espaces et des apostrophes.
+     « Rêve doré »                  → artefacts/reve-dore.png
+     « Cœur de la fournaise »       → artefacts/coeur-de-la-fournaise.png
+     « Aubade d'astre et de lune »  → artefacts/aubade-d-astre-et-de-lune.png
+   Tant que l'image n'est pas déposée, un emplacement vide s'affiche à sa place.
+   Les lignes qui ne sont pas des sets (« 2p ATQ% », « Bonus DGT Hydro »…)
+   n'ont pas d'emplacement. */
+const PAS_UN_SET = /^(ATQ|PV|DEF|Bonus\b|Maîtrise élémentaire|Recharge|Taux CRIT|DGT CRIT)/i;
+
+const slugSet = (nom) => nom
+  .toLowerCase()
+  .replace(/œ/g, "oe").replace(/æ/g, "ae")
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-+|-+$/g, "");
+
+function iconeSet(nom) {
+  if (PAS_UN_SET.test(nom)) return "";
+  return `<span class="set-icone"><img class="icone-set" src="artefacts/${slugSet(nom)}.png" alt="" loading="lazy" width="44" height="44"></span>`;
+}
+
 function ligneSet(txt, i) {
   const { morceaux, note } = lireSet(txt);
   const corps = morceaux.map(m =>
-    `<span class="set-bloc">${m.n ? `<span class="set-piece">${m.n}<small>p</small></span>` : ""}<span class="set-nom">${esc(m.nom)}</span></span>`
+    `<span class="set-bloc">${iconeSet(m.nom)}${m.n ? `<span class="set-piece">${m.n}<small>p</small></span>` : ""}<span class="set-nom">${esc(m.nom)}</span></span>`
   ).join('<span class="set-plus">+</span>');
   return `
     <li class="set ${i === 0 ? "set-top" : ""}">
@@ -329,6 +352,19 @@ function brancherImages() {
         return;
       }
       img.closest(".avec-fond")?.classList.remove("avec-fond");
+      img.remove();
+    });
+  });
+
+  // icônes de sets : même principe, mais l'emplacement reste visible (vide)
+  app.querySelectorAll("img.icone-set").forEach(img => {
+    img.addEventListener("error", () => {
+      const src = img.getAttribute("src") || "";
+      const point = src.lastIndexOf(".");
+      const ext = point > -1 ? src.slice(point).toLowerCase() : "";
+      const suivante = EXTENSIONS[EXTENSIONS.indexOf(ext) + 1];
+      if (ext && suivante) { img.setAttribute("src", src.slice(0, point) + suivante); return; }
+      img.parentElement?.classList.add("set-icone-vide");
       img.remove();
     });
   });
