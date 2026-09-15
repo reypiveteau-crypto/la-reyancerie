@@ -51,8 +51,7 @@ const ARMES = {
 
 const app = document.getElementById("app");
 let fElement = null, fRegion = null, fRole = null, fBuild = false, recherche = "";
-let currentCharacterId = null;
-let isLoading = false;
+
 const svgEl   = (el, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="currentColor" aria-hidden="true">${ICONES[el] || ""}</svg>`;
 const svgArme = (a, s = 15) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="currentColor" aria-hidden="true">${ARMES[a] || ""}</svg>`;
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -262,31 +261,42 @@ function carte(p) {
 
 /* ---------- Vue fiche ---------- */
 function vueFiche(p) {
-  if (isLoading) return;
-  isLoading = true;
-  
-  try {
-    app.style.display = 'none';
-    
-    const cardContainer = document.getElementById('character-card-container');
-    if (cardContainer) {
-      cardContainer.style.display = 'block';
-    }
-    
-    CharacterCardLoader.load(p.id, 'character-card-container');
-    currentCharacterId = p.id;
-    
-    document.getElementById('character-card-container').scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
-    });
-    
-  } catch (error) {
-    console.error('Erreur lors de l\'affichage du personnage:', error);
-    app.style.display = 'block';
-  } finally {
-    isLoading = false;
-  }
+  const b = p.build, img = imageDe(p);
+  app.innerHTML = `
+    <article class="detail${img ? " avec-fond" : ""}" style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
+      ${img ? `<img class="fond" src="${esc(img)}" alt="Portrait de ${esc(p.nom)}" decoding="async">` : ""}
+      <button class="back" id="back">← Tous les personnages</button>
+
+      <header class="detail-head">
+        <span class="el-badge big">${svgEl(p.element, 30)}</span>
+        <div class="detail-id">
+          <p class="detail-region">${esc(p.region)}</p>
+          <h2>${esc(p.nom)}</h2>
+          <div class="detail-sub">
+            <span class="stars${p.rarete === 5 ? " s5" : ""}">${p.rarete ? "★".repeat(p.rarete) : "—"}</span>
+            <span class="sep">·</span><span>${esc(p.element)}</span>
+            <span class="sep">·</span><span class="wpn">${svgArme(p.arme)}${esc(p.arme)}</span>
+            <span class="sep">·</span><span>${esc(p.role)}</span>
+            ${p.tier ? `<span class="tier">${p.tier}</span>` : ""}
+          </div>
+        </div>
+      </header>
+
+      <section class="bio">
+        <h3 class="bio-label">Qui est ${esc(p.nom)} ?</h3>
+        <p>${esc(p.bio)}</p>
+      </section>
+
+      ${b ? panneauxBuild(p, b) : `
+        <section class="panel panel-empty">
+          <h3>${p.note ? "Pourquoi pas de build ici" : "Build en préparation"}</h3>
+          <p>${p.note ? esc(p.note) : `Le build de ${esc(p.nom)} n'a pas encore été vérifié sur les sources de référence,
+             et rien n'est affiché plutôt que quelque chose de faux. ${avecBuild} personnages ont déjà leur build complet.`}</p>
+        </section>`}
+    </article>
+  `;
+  document.getElementById("back").onclick = () => { location.hash = ""; };
+  brancherImages();
 }
 
 function panneauxBuild(p, b) {
