@@ -116,12 +116,22 @@ const slugSet = (nom) => nom
   .toLowerCase()
   .replace(/œ/g, "oe").replace(/æ/g, "ae")
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/[«»]/g, "").replace(/[^a-z0-9]+/g, "-")
   .replace(/^-+|-+$/g, "");
 
 function iconeSet(nom) {
   if (PAS_UN_SET.test(nom)) return "";
   return `<span class="set-icone"><img class="icone-set" src="artefacts/${slugSet(nom)}.png" alt="" loading="lazy" width="44" height="44"></span>`;
+}
+
+/* ---------- Icône d'une arme ----------
+   Même principe que les sets, dans le dossier armes/ :
+     « Arc d'Amos »                   → armes/arc-d-amos.png
+     « Absolution (signature) »       → armes/absolution.png   (la parenthèse est ignorée)
+   Tant que l'image n'est pas déposée, un emplacement vide s'affiche. */
+function iconeArme(nom) {
+  const base = nom.replace(/\s*\([^)]*\)\s*$/, "");
+  return `<span class="set-icone arme-icone"><img class="icone-set" src="armes/${slugSet(base)}.png" alt="" loading="lazy" width="44" height="44"></span>`;
 }
 
 function ligneSet(txt, i) {
@@ -296,7 +306,7 @@ function panneauxBuild(p, b) {
     <div class="panels">
       <section class="panel">
         <h3>Armes recommandées</h3>
-        <ol class="rank-list">${b.armes.map((a, i) => `<li class="${i === 0 ? "best" : ""}">${esc(a)}</li>`).join("")}</ol>
+        <ol class="rank-list">${b.armes.map((a, i) => `<li class="${i === 0 ? "best" : ""}">${iconeArme(a)}<span class="arme-nom">${esc(a)}</span></li>`).join("")}</ol>
       </section>
 
       <section class="panel">
