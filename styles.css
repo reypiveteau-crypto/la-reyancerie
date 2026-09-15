@@ -400,6 +400,25 @@ p { margin: 0; }
 .set-top .set-piece { border-color: var(--gold-dim); color: var(--gold); }
 .set-top .set-piece small { color: var(--gold-dim); }
 .set-nom { font-size: 14.5px; line-height: 1.35; }
+
+/* emplacement de l'image du set (dossier artefacts/) */
+.set-icone {
+  flex: 0 0 auto;
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 45%, rgba(217, 185, 107, .14), transparent 70%);
+}
+.set-icone img { width: 44px; height: 44px; object-fit: contain; display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .45)); }
+.set-icone-vide {
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+}
+.set-top .set-icone-vide { border-color: var(--gold-dim); }
+@media (max-width: 520px) {
+  .set-icone, .set-icone img { width: 36px; height: 36px; }
+}
 .set-plus { color: var(--faint); font-size: 14px; font-weight: 600; padding-inline: 1px; }
 .set-note {
   font-size: 12px; color: var(--muted);
