@@ -133,6 +133,44 @@
     return m;
   }
 
+  // ---------- emblèmes des jeux (dessins originaux, pas les logos officiels)
+  const EMBLEMES = {
+    // Étoile de Teyvat : rose des vents à 8 branches dans un cercle gravé
+    genshin: `<circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1.5 4"/>
+      <g class="em-tourne">
+        <path d="M50 22 53 47 78 50 53 53 50 78 47 53 22 50 47 47Z" transform="rotate(45 50 50)" fill="currentColor" opacity=".45"/>
+        <path d="M50 6 56 44 94 50 56 56 50 94 44 56 6 50 44 44Z" fill="currentColor"/>
+      </g>
+      <circle cx="50" cy="50" r="7" fill="#fff"/><circle cx="50" cy="50" r="3" fill="currentColor"/>
+      <g fill="currentColor"><path d="M50 1l2 3-2 3-2-3z"/><path d="M50 93l2 3-2 3-2-3z"/><path d="M1 50l3-2 3 2-3 2z"/><path d="M93 50l3-2 3 2-3 2z"/></g>`,
+    // Rail stellaire : planète à anneau, rail de lumière et étoile
+    hsr: `<path d="M4 96 C30 78 58 52 96 8" fill="none" stroke="currentColor" stroke-width="10" stroke-dasharray="1.6 5.5" opacity=".55"/>
+      <path d="M4 96 C30 78 58 52 96 8" fill="none" stroke="#fff" stroke-width="1.4"/>
+      <circle cx="44" cy="46" r="21" fill="currentColor"/>
+      <path d="M31 36a20 20 0 0 1 20-10" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+      <ellipse cx="44" cy="46" rx="38" ry="11" transform="rotate(-22 44 46)" fill="none" stroke="currentColor" stroke-width="3"/>
+      <path d="M44 25a21 21 0 0 1 0 42" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="10" opacity=".4"/>
+      <path class="em-scintille" d="M82 70l2.5 7 7 2.5-7 2.5-2.5 7-2.5-7-7-2.5 7-2.5z" fill="#fff"/>
+      <circle cx="18" cy="18" r="1.8" fill="#fff"/><circle cx="72" cy="22" r="1.2" fill="#fff"/>`,
+    // Onde de résonance : cristal central, arcs d'écho et vague
+    wuwa: `<g fill="none" stroke="currentColor" stroke-linecap="round">
+        <path class="em-onde1" d="M30 24a36 36 0 0 0 0 52M70 24a36 36 0 0 1 0 52" stroke-width="3"/>
+        <path class="em-onde2" d="M18 12a52 52 0 0 0 0 76M82 12a52 52 0 0 1 0 76" stroke-width="2" opacity=".6"/>
+        <path d="M4 94c6-6 10-6 16 0s10 6 16 0 10-6 16 0 10 6 16 0 10-6 16 0 10 6 16 0" stroke-width="2.4"/>
+      </g>
+      <path d="M50 14 64 48 50 82 36 48Z" fill="currentColor"/>
+      <path d="M50 14 50 82 36 48Z" fill="#fff" opacity=".35"/>
+      <path d="M50 30 56 48 50 66 44 48Z" fill="#fff" opacity=".8"/>`,
+    // Néon urbain : ligne de toits, anneau néon et éclair
+    nte: `<circle class="em-neon" cx="64" cy="30" r="20" fill="none" stroke="currentColor" stroke-width="4"/>
+      <circle cx="64" cy="30" r="12" fill="none" stroke="#fff" stroke-width="1.2" opacity=".7"/>
+      <path d="M4 96V62h12V48h10v22h8V36h16v28h8V52h14v12h8V44h16v52Z" fill="currentColor" opacity=".9"/>
+      <g fill="#fff" opacity=".85"><rect x="40" y="42" width="3" height="3"/><rect x="45" y="50" width="3" height="3"/><rect x="40" y="58" width="3" height="3"/><rect x="8" y="68" width="3" height="3"/><rect x="72" y="58" width="3" height="3"/><rect x="86" y="52" width="3" height="3"/><rect x="86" y="62" width="3" height="3"/><rect x="17" y="56" width="3" height="3"/></g>
+      <path class="em-eclair" d="M24 6 14 26h8l-4 14 14-22h-9l5-12z" fill="#ffe14d"/>`
+  };
+  const embleme = (g) => EMBLEMES[g.slug] ? `<svg class="tuile-embleme" viewBox="0 0 100 100" aria-hidden="true">${EMBLEMES[g.slug]}</svg>` : "";
+
   // ---------- cartes
   function carteBuild(b, auteurs) {
     const g = jeu(b.game), a = auteurs[b.author_id];
@@ -210,7 +248,7 @@
     <section class="bloc">
       <div class="bloc-tete"><h2>${ME ? "Tes jeux" : "Les jeux"}</h2><a href="#/jeux" class="lien">Tous les jeux →</a></div>
       <div class="grille grille-jeux">
-        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu" href="#/jeu/${g.slug}" style="--c:${g.couleur}"><span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
+        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu tuile-${g.slug}" href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}<span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
       </div>
     </section>
 
@@ -330,9 +368,9 @@
     <div class="grille grille-jeux-grands">
       ${JEUX.map((g) => {
         const nb = builds.filter((b) => b.game === g.slug).length, ns = mems.filter((m) => m.game === g.slug).length, nj = profils.filter((p) => (p.games || []).includes(g.slug)).length;
-        return `<a class="tuile-jeu tuile-grande" href="#/jeu/${g.slug}" style="--c:${g.couleur}">
+        return `<a class="tuile-jeu tuile-grande tuile-${g.slug}" href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}
           <span class="tuile-nom">${esc(g.nom)}</span>
-          <span class="tuile-stats"><span><b>${nj}</b> joueurs</span><span><b>${nb}</b> builds</span><span><b>${ns}</b> souvenirs</span></span>
+          <span class="tuile-stats"><span><b>${nj}</b> joueur${nj > 1 ? "s" : ""}</span><span><b>${nb}</b> build${nb > 1 ? "s" : ""}</span><span><b>${ns}</b> souvenir${ns > 1 ? "s" : ""}</span></span>
         </a>`;
       }).join("")}
     </div>`;
