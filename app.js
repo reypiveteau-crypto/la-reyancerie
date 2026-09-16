@@ -25,17 +25,23 @@
     return g.roster.find((p) => p.id === cle || p.nom === cle)
       || g.roster.find((p) => p.nom.endsWith(" " + cle)) || null;
   }
-  function srcPortrait(p) {
-    if (IMGS[p.id]) return IMGS[p.id];
+  // Portrait : Genshin à la racine du dépôt, les autres jeux dans leur dossier (hsr/, wuwa/, nte/)
+  function srcPortrait(g, p) {
+    const dossier = (g.ui && g.ui.images && g.ui.images.dossier) || "";
+    if (IMGS[dossier + p.id]) return IMGS[dossier + p.id];
     if (p.image) return p.image;
-    if (typeof AVEC_IMAGE === "undefined") return "";
-    const e = AVEC_IMAGE.find((x) => x === p.id || x.startsWith(p.id + "."));
-    return e ? (e.includes(".") ? e : e + ".png") : "";
+    const liste = (g.ui && g.ui.images && g.ui.images.liste) || [];
+    const e = liste.find((x) => x === p.id || x.startsWith(p.id + "."));
+    return e ? dossier + (e.includes(".") ? e : e + ".png") : "";
   }
+  const PALETTES = window.REY_ELEMENTS || {};
+  const palette = (g) => PALETTES[(g.ui && g.ui.elements) || ""] || {};
   const srcIcone = (dossier, nom) => IMGS[dossier + "/" + slugNom(nom)] || dossier + "/" + slugNom(nom) + ".png";
-  const couleurPerso = (g, p) => (G.couleurs[p.element] || g.couleur);
-  const iconeEl = (el, t) => `<svg viewBox="0 0 24 24" width="${t || 16}" height="${t || 16}" fill="currentColor" aria-hidden="true">${G.icones[el] || ""}</svg>`;
-  const etoiles = (n) => (n ? `<span class="etoiles r${n}">${"★".repeat(n)}</span>` : "");
+  const couleurPerso = (g, p) => ((palette(g)[p.element] || {}).c || g.couleur);
+  const iconeEl = (g, el, t) => `<svg viewBox="0 0 24 24" width="${t || 16}" height="${t || 16}" fill="currentColor" aria-hidden="true">${(palette(g)[el] || {}).i || ""}</svg>`;
+  const etoiles = (g, n) => (n ? `<span class="etoiles r${n}">${g.ui ? g.ui.rang(n) : "★".repeat(n)}</span>` : "");
+  // « de Furina » / « d'Achéron »
+  const de = (nom) => (/^[aeiouyhàâéèêëîïôöûüœ]/i.test(nom) ? "d'" : "de ") + esc(nom);
   const estSouvenir = (m) => !m.kind || m.kind === "souvenir";
   const MAX_IMAGES_BUILD = 4;
   const MAX_OCTETS = 5 * 1024 * 1024;
@@ -55,6 +61,9 @@
     ? `<details class="signaler"><summary>Signaler</summary><div class="signaler-choix">${RAISONS.map((r) => `<button type="button" data-signaler="${type}" data-id="${esc(id)}" data-raison="${esc(r)}">${esc(r)}</button>`).join("")}</div></details>`
     : "";
 
+  let banniereOK = true;
+  let themeCourant = "";
+
   // Image absente : on essaie les autres extensions, puis on retire l'image proprement.
   document.addEventListener("error", (ev) => {
     const img = ev.target;
@@ -64,7 +73,12 @@
     const ext = i > -1 ? src.slice(i).toLowerCase() : "";
     const suivante = EXT[EXT.indexOf(ext) + 1];
     if (EXT.includes(ext) && suivante) { img.setAttribute("src", src.slice(0, i) + suivante); return; }
-    if (img.dataset.repli === "banniere") { const h = document.getElementById("hero-repli"); if (h) h.hidden = false; }
+    if (img.dataset.repli === "banniere") {
+      banniereOK = false;
+      document.getElementById("banniere-accueil").hidden = true;
+      const h = document.getElementById("hero-repli"); if (h) h.hidden = false;
+      return;
+    }
     if (img.dataset.repli === "vide") img.parentElement && img.parentElement.classList.add("icone-vide");
     img.remove();
   }, true);
@@ -182,9 +196,9 @@
 
     return `
     <section class="accueil-tete">
-      <img class="banniere" src="${esc(IMGS.banniere || CFG.BANNIERE || "banniere.png")}" alt="${esc(CFG.NOM_SITE)}" data-repli="banniere">
-      <!-- Texte de secours : affiché seulement si l'image de la bannière est introuvable -->
-      <div class="hero" id="hero-repli" hidden>
+      <!-- La bannière pleine largeur est au-dessus de la page (index.html).
+           Ce texte ne s'affiche que si l'image est introuvable. -->
+      <div class="hero" id="hero-repli" ${banniereOK ? "hidden" : ""}>
         <p class="surtitre">La plateforme de notre communauté</p>
         <h1>Nos builds, nos événements,<br><em>notre histoire.</em></h1>
       </div>
@@ -332,6 +346,7 @@
   pages.jeu = async ([slug, idPerso], q) => {
     const g = jeu(slug);
     if (!g) return vide("Ce jeu n'est pas (encore) sur la plateforme.");
+    themeCourant = g.slug;
     if (g.roster && idPerso) return pagePerso(g, idPerso);
     if (g.roster) return pageRoster(g);
     const perso = q.get("perso") || "";
@@ -373,22 +388,31 @@
   let rosterOuvert = false;
   const RANGEES_VISIBLES = 2; // rangées affichées avant « Plus de personnages »
 
+  // Barre pour passer d'un jeu à l'autre, en haut de chaque espace jeu
+  const ongletsJeux = (actif) => `<nav class="onglets-jeux" aria-label="Changer de jeu">${JEUX.map((x) => `<a href="#/jeu/${x.slug}" class="${x.slug === actif ? "on" : ""}" style="--c:${x.couleur}">${esc(x.court)}</a>`).join("")}</nav>`;
+
   async function pageRoster(g) {
+    themeCourant = g.slug;
+    // Les filtres sont propres à chaque jeu : on repart de zéro en changeant de jeu
+    if (filtresRoster.jeu !== g.slug) { Object.assign(filtresRoster, { jeu: g.slug, q: "", el: "", arme: "", rar: "" }); rosterOuvert = false; }
     const [builds, mems, evts, profils, auteurs] = await Promise.all([S.builds({ game: g.slug }), S.memories({ game: g.slug }), S.events({ game: g.slug }), S.profiles(), profilsParId()]);
     const compte = {};
     const ajoute = (nom) => { const p = persoDe(g.slug, nom); if (p) compte[p.id] = (compte[p.id] || 0) + 1; };
     builds.forEach((b) => ajoute(b.character));
     mems.forEach((m) => m.character && ajoute(m.character));
     const roster = g.roster.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
-    const elements = Object.keys(G.couleurs).filter((e) => roster.some((p) => p.element === e));
+    const pal = palette(g);
+    const elements = Object.keys(pal).filter((e) => roster.some((p) => p.element === e));
+    const armes = g.ui.armes.filter((a) => roster.some((p) => p.arme === a));
     const joueurs = profils.filter((p) => (p.games || []).includes(g.slug));
     const creations = mems.filter((m) => !estSouvenir(m));
     const puce = (groupe, val, html, couleur) => `<button type="button" class="puce ${filtresRoster[groupe] === val ? "on" : ""}" data-filtre="${groupe}" data-val="${esc(val)}"${couleur ? ` style="--c:${couleur}"` : ""}>${html}</button>`;
 
     return {
       html: `
+      ${ongletsJeux(g.slug)}
       <section class="page-tete jeu-tete" style="--c:${g.couleur}">
-        <p class="surtitre">Jeu</p>
+        <p class="surtitre">${esc(g.ui.theme)}</p>
         <h1>${esc(g.nom)}</h1>
         <p class="chapo">${roster.length} personnages · ${builds.length} build${builds.length > 1 ? "s" : ""} et ${creations.length} création${creations.length > 1 ? "s" : ""} partagés par ${joueurs.length} membre${joueurs.length > 1 ? "s" : ""}. Clique sur un personnage pour voir son guide et tout ce que la communauté a publié sur lui.</p>
       </section>
@@ -397,8 +421,8 @@
         <div class="filtres-roster">
           <label class="sr" for="f-roster-q">Chercher un personnage</label>
           <input type="search" id="f-roster-q" placeholder="Chercher un personnage…" value="${esc(filtresRoster.q)}" autocomplete="off">
-          <div class="puces">${elements.map((e) => puce("el", e, iconeEl(e) + `<span>${esc(e)}</span>`, G.couleurs[e])).join("")}</div>
-          <div class="puces">${G.armes.map((a) => puce("arme", a, esc(a))).join("")}${puce("rar", "5", "5★", "#f5c86b")}${puce("rar", "4", "4★", "#c9a2ff")}</div>
+          <div class="puces" aria-label="${esc(g.ui.libelleElement)}">${elements.map((e) => puce("el", e, iconeEl(g, e) + `<span>${esc(e)}</span>`, pal[e].c)).join("")}</div>
+          <div class="puces" aria-label="${esc(g.ui.libelleArme)}">${armes.map((a) => puce("arme", a, esc(a))).join("")}${g.ui.rangs.map((n) => puce("rar", String(n), esc(g.ui.rang(n) === "★".repeat(n) ? n + "★" : "Rang " + g.ui.rang(n)), n === 5 ? "var(--rang5)" : "var(--rang4)")).join("")}</div>
           <p class="faible roster-info"><span id="roster-compte"></span> <button type="button" class="lien-discret" data-filtre="reset">Effacer les filtres</button></p>
         </div>
         <div class="grille-persos" id="grille-persos">
@@ -428,13 +452,13 @@
   }
 
   function cartePerso(g, p, n) {
-    const src = srcPortrait(p);
+    const src = srcPortrait(g, p);
     return `<a class="perso" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
       <span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>
       ${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-repli="cacher">` : ""}
-      <span class="perso-el" title="${esc(p.element)}">${iconeEl(p.element, 15)}</span>
+      <span class="perso-el" title="${esc(p.element)}">${iconeEl(g, p.element, 15)}</span>
       ${n ? `<span class="perso-compte" title="${n} publication${n > 1 ? "s" : ""} de la communauté">${n}</span>` : ""}
-      <span class="perso-bas"><span class="perso-nom">${esc(p.nom)}</span>${etoiles(p.rarete)}</span>
+      <span class="perso-bas"><span class="perso-nom">${esc(p.nom)}</span>${etoiles(g, p.rarete)}</span>
     </a>`;
   }
 
@@ -484,6 +508,15 @@
   function guideDe(g, p) {
     const b = p.build;
     if (!b) {
+      if (g.slug !== "genshin") {
+        return `<dl class="carte-identite">
+          <div><dt>${esc(g.ui.libelleElement)}</dt><dd><span class="meta-el">${iconeEl(g, p.element, 18)} ${esc(p.element)}</span></dd></div>
+          <div><dt>${esc(g.ui.libelleArme)}</dt><dd>${esc(p.arme || "—")}</dd></div>
+          <div><dt>Rareté</dt><dd>${p.rarete ? etoiles(g, p.rarete) : "Non confirmée"}</dd></div>
+          ${p.role ? `<div><dt>Rôle</dt><dd>${esc(p.role)}</dd></div>` : ""}
+        </dl>
+        <div class="vide"><p><b>Guide de référence à venir</b></p><p>Aucun guide n'est affiché tant qu'il n'a pas été vérifié. En attendant, les builds des membres juste en dessous sont la meilleure source.</p></div>`;
+      }
       return `<div class="vide"><p><b>${p.note ? "Pourquoi pas de build ici" : "Build de référence en préparation"}</b></p><p>${esc(p.note || "Ce build n'a pas encore été vérifié : rien n'est affiché plutôt que quelque chose de faux. En attendant, regarde les builds des membres juste en dessous.")}</p></div>`;
     }
     const seq = (arr) => (arr || []).map((x, i) => `${i ? '<span class="seq-fleche">›</span>' : ""}<span class="seq-item">${esc(x)}</span>`).join("");
@@ -495,7 +528,7 @@
     };
     const equipier = (nom) => {
       const q = persoDe(g.slug, nom);
-      const src = q ? srcPortrait(q) : "";
+      const src = q ? srcPortrait(g, q) : "";
       const contenu = `<span class="equipier-img" style="--el:${q ? couleurPerso(g, q) : g.couleur}"><span aria-hidden="true">${esc(nom[0])}</span>${src ? `<img src="${esc(src)}" alt="" loading="lazy" data-repli="cacher">` : ""}</span><span>${esc(nom)}</span>`;
       if (q && q.id === p.id) return `<span class="equipier soi">${contenu}</span>`;
       return q ? `<a class="equipier" href="#/jeu/${g.slug}/${esc(q.id)}">${contenu}</a>` : `<span class="equipier">${contenu}</span>`;
@@ -521,13 +554,14 @@
   }
 
   async function pagePerso(g, id) {
+    themeCourant = g.slug;
     const p = persoDe(g.slug, id);
     if (!p) return vide("Ce personnage n'existe pas.", `<a class="btn" href="#/jeu/${g.slug}">Tous les personnages</a>`);
     const [builds, mems, auteurs] = await Promise.all([S.builds({ game: g.slug, character: p.nom }), S.memories({ game: g.slug, character: p.nom }), profilsParId()]);
     const creations = mems.filter((m) => !estSouvenir(m));
     const souvenirs = mems.filter(estSouvenir);
     const idsMembres = [...new Set([...builds.map((b) => b.author_id), ...mems.map((m) => m.author_id)])];
-    const src = srcPortrait(p);
+    const src = srcPortrait(g, p);
     const nomUrl = encodeURIComponent(p.nom);
     const ancre = (cible, label, n) => `<button type="button" class="ancre" data-ancre="${cible}">${label}${n != null ? ` <small>${n}</small>` : ""}</button>`;
 
@@ -537,18 +571,18 @@
       <header class="perso-tete">
         <div class="perso-portrait"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}</div>
         <div class="perso-id">
-          <p class="surtitre">${esc(p.region || "")} · ${esc(g.nom)}</p>
+          <p class="surtitre">${esc(p.region || g.ui.theme)} · ${esc(g.nom)}</p>
           <h1>${esc(p.nom)}</h1>
           <div class="perso-meta">
-            ${etoiles(p.rarete)}
-            <span class="meta-el">${iconeEl(p.element, 18)} ${esc(p.element)}</span>
-            <span>${esc(p.arme)}</span>
-            <span>${esc(p.role || "")}</span>
+            ${etoiles(g, p.rarete)}
+            <span class="meta-el">${iconeEl(g, p.element, 18)} ${esc(p.element)}</span>
+            <span title="${esc(g.ui.libelleArme)}">${esc(p.arme)}</span>
+            ${p.role ? `<span>${esc(p.role)}</span>` : ""}
             ${p.tier ? `<span class="tier">${esc(p.tier)}</span>` : ""}
           </div>
           ${p.bio ? `<p class="bio">${esc(p.bio)}</p>` : ""}
           <div class="actions">
-            <a class="btn" href="#/nouveau-build?jeu=${g.slug}&perso=${nomUrl}">+ Publier mon build de ${esc(p.nom)}</a>
+            <a class="btn" href="#/nouveau-build?jeu=${g.slug}&perso=${nomUrl}">+ Publier mon build ${de(p.nom)}</a>
             <a class="btn btn-fantome" href="#/nouveau-souvenir?type=dessin&jeu=${g.slug}&perso=${nomUrl}">+ Partager un dessin ou un screenshot</a>
           </div>
         </div>
@@ -558,11 +592,11 @@
         ${ancre("s-guide", "Guide")}${ancre("s-builds", "Builds des membres", builds.length)}${ancre("s-creations", "Créations", creations.length)}${ancre("s-souvenirs", "Souvenirs", souvenirs.length)}${ancre("s-membres", "Membres", idsMembres.length)}
       </nav>
 
-      <section class="bloc" id="s-guide"><h2>Le guide de ${esc(p.nom)}</h2>${guideDe(g, p)}</section>
+      <section class="bloc" id="s-guide"><h2>Le guide ${de(p.nom)}</h2>${guideDe(g, p)}</section>
 
       <section class="bloc" id="s-builds">
         <div class="bloc-tete"><h2>Builds des membres</h2><a class="btn btn-petit" href="#/nouveau-build?jeu=${g.slug}&perso=${nomUrl}">+ Publier le mien</a></div>
-        <div class="grille">${builds.map((b) => carteBuild(b, auteurs)).join("") || vide(`Personne n'a encore partagé son build de ${esc(p.nom)}.`)}</div>
+        <div class="grille">${builds.map((b) => carteBuild(b, auteurs)).join("") || vide(`Personne n'a encore partagé son build ${de(p.nom)}.`)}</div>
       </section>
 
       <section class="bloc" id="s-creations">
@@ -588,6 +622,7 @@
     const g = jeu(b.game), a = await S.profile(b.author_id);
     const peutSuppr = ME && (ME.id === b.author_id || estEquipe());
     const perso = persoDe(b.game, b.character);
+    themeCourant = b.game;
     const champsRemplis = (g ? g.champs : []).filter((c) => b.fields && b.fields[c.cle]);
     return `
     <article class="fiche-build" style="--c:${g ? g.couleur : "#fff"}">
@@ -600,7 +635,7 @@
       </header>
       ${enAttente(b) ? `<p class="bandeau-attente">Ce build attend la validation d'un modérateur : pour l'instant, seuls toi et l'équipe le voyez.</p>` : ""}
       <section class="galerie">
-        ${(b.images || []).map(urlSure).filter(Boolean).map((u, i) => `<button type="button" class="galerie-item" data-zoom-src="${esc(u)}" aria-label="Agrandir l'image ${i + 1}"><img src="${esc(u)}" alt="Capture ${i + 1} du build de ${esc(b.character)}" loading="lazy"></button>`).join("") || '<p class="faible">Pas d\'image pour ce build.</p>'}
+        ${(b.images || []).map(urlSure).filter(Boolean).map((u, i) => `<button type="button" class="galerie-item" data-zoom-src="${esc(u)}" aria-label="Agrandir l'image ${i + 1}"><img src="${esc(u)}" alt="Capture ${i + 1} du build ${de(b.character)}" loading="lazy"></button>`).join("") || '<p class="faible">Pas d\'image pour ce build.</p>'}
       </section>
       ${champsRemplis.length ? `<dl class="champs">${champsRemplis.map((c) => `<div class="champ"><dt>${esc(c.label)}</dt><dd>${esc(b.fields[c.cle])}</dd></div>`).join("")}</dl>` : ""}
       ${b.notes ? `<section class="notes"><h2>Conseils de l'auteur</h2><p>${esc(b.notes)}</p></section>` : ""}
@@ -719,12 +754,13 @@
     if (!ME) return doitSeConnecter();
     const slug = q.get("jeu") || (ME.games && ME.games[0]) || JEUX[0].slug;
     const g = jeu(slug) || JEUX[0];
+    themeCourant = g.slug;
     const persoChoisi = q.get("perso") || "";
     const champPerso = g.roster
       ? `<select id="f-perso" name="character" required><option value="">Choisis un personnage</option>${g.roster.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr")).map((p) => `<option ${p.nom === persoChoisi ? "selected" : ""}>${esc(p.nom)}</option>`).join("")}</select>`
       : `<input id="f-perso" name="character" required list="l-persos" maxlength="60" value="${esc(persoChoisi)}" placeholder="${esc(g.persos[0] || "Nom")}">`;
     return `
-    <section class="page-tete"><p class="surtitre">Nouveau build</p><h1>Partage ton build${persoChoisi ? " de " + esc(persoChoisi) : ""}</h1></section>
+    <section class="page-tete"><p class="surtitre">Nouveau build</p><h1>Partage ton build${persoChoisi ? " " + de(persoChoisi) : ""}</h1></section>
     <nav class="filtres">${JEUX.map((x) => `<a href="#/nouveau-build?jeu=${x.slug}" class="${x.slug === g.slug ? "on" : ""}" style="--c:${x.couleur}">${esc(x.court)}</a>`).join("")}</nav>
     <form class="form" data-form="build" data-jeu="${g.slug}" style="--c:${g.couleur}">
       <label for="f-perso">${esc(g.motEntite)} *</label>
@@ -822,7 +858,9 @@
     const [chemin, qs] = brut.split("?");
     const parts = chemin.split("/").filter(Boolean).map(decodeURIComponent);
     const nom = ROUTES[parts[0] || ""] || null;
-    document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.dataset.page === (parts[0] || "")));
+    const rubrique = parts[0] === "jeu" ? "jeux" : (parts[0] || "");
+    document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.dataset.page === rubrique));
+    themeCourant = "";
     if (!nom) { $app.innerHTML = vide("Page introuvable.", `<a class="btn" href="#/">Retour à l'accueil</a>`); return; }
     $app.setAttribute("aria-busy", "true");
     try {
@@ -830,10 +868,15 @@
       $app.innerHTML = typeof r === "string" ? r : r.html;
       if (r && r.apres) r.apres();
     } catch (err) {
+      themeCourant = "";
       console.error(err);
       $app.innerHTML = vide("Impossible de charger cette page : " + esc(err.message) + ". Réessaie dans un instant.");
     }
     $app.removeAttribute("aria-busy");
+    // Chaque jeu a son propre habillage (voir styles.css, [data-jeu="..."])
+    if (themeCourant) document.documentElement.dataset.jeu = themeCourant;
+    else delete document.documentElement.dataset.jeu;
+    document.getElementById("banniere-accueil").hidden = !(nom === "accueil" && banniereOK);
     document.title = CFG.NOM_SITE + (nom === "accueil" ? "" : " · " + (($app.querySelector("h1") || {}).textContent || ""));
     if (!rendre.memeEcran) window.scrollTo(0, 0);
     rendre.memeEcran = false;
@@ -1036,6 +1079,8 @@
     if (CFG.INVITATION_DISCORD) {
       document.getElementById("lien-discord").innerHTML = `<a class="lien" href="${esc(CFG.INVITATION_DISCORD)}" target="_blank" rel="noopener">Rejoindre le serveur Discord ↗</a>`;
     }
+    const ban = document.getElementById("banniere-accueil");
+    ban.innerHTML = `<img src="${esc(IMGS.banniere || CFG.BANNIERE || "banniere.png")}" alt="${esc(CFG.NOM_SITE)}" data-repli="banniere">`;
     window.addEventListener("hashchange", rendre);
     rendre();
   }
