@@ -7,7 +7,7 @@
   <meta name="description" content="La plateforme de la communauté : builds Genshin Impact, Honkai: Star Rail, Wuthering Waves et Neverness to Everness, événements et souvenirs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Chakra+Petch:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Unbounded:wght@500;700;800&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,6 +24,9 @@
     <div id="zone-compte" class="zone-compte"></div>
   </header>
 
+  <!-- Bannière de l'accueil, sur toute la largeur de l'écran (image : banniere.png) -->
+  <div id="banniere-accueil" class="banniere-accueil" hidden></div>
+
   <main id="app" class="contenu"><p class="faible">Chargement…</p></main>
 
   <footer class="pied">
@@ -35,6 +38,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="data.js"></script>        <!-- les 119 fiches Genshin (ton fichier actuel, inchangé) -->
+  <script src="rosters.js"></script>     <!-- les fiches HSR, WuWa et NTE -->
   <script src="plateforme.js"></script>  <!-- les jeux de la plateforme, badges, démo -->
   <script src="store.js"></script>
   <script src="app.js"></script>
