@@ -1133,3 +1133,19 @@ img[data-zoom] { cursor: zoom-in; }
   .compteur-c { padding: 14px; }
   .compteur-c b { font-size: 1.8rem; }
 }
+
+/* ---------- image de fond des tuiles de jeux (jeux/<jeu>.png) */
+.tuile-jeu .tuile-fond {
+  position: absolute; inset: 0; width: 100%; height: 100%; max-width: 100%; z-index: 0 !important;
+  object-fit: cover; object-position: center; transition: transform .6s ease;
+}
+.tuile-jeu:has(.tuile-fond)::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(0deg, rgba(10, 6, 24, .92) 0%, rgba(10, 6, 24, .45) 55%, rgba(10, 6, 24, .15) 100%),
+              linear-gradient(90deg, color-mix(in srgb, var(--c) 35%, transparent), transparent 60%);
+}
+.tuile-jeu:has(.tuile-fond) .tuile-embleme, .tuile-jeu:has(.tuile-fond)::after { display: none; }
+.tuile-jeu:has(.tuile-fond) { border-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.tuile-jeu:hover .tuile-fond { transform: scale(1.06); }
+.tuile-jeu .tuile-nom, .tuile-jeu .tuile-chiffre, .tuile-jeu .tuile-stats { position: relative; z-index: 2; }
+.tuile-jeu .reflet { z-index: 3; }
