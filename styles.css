@@ -1084,25 +1084,32 @@ img[data-zoom] { cursor: zoom-in; }
 }
 @keyframes balayage { 0%, 60% { background-position: -150% 0; } 100% { background-position: 150% 0; } }
 
-/* fil d'activité qui défile */
-.fil {
-  display: flex; align-items: center; gap: 0; overflow: hidden; border-radius: 999px;
-  border: 1px solid var(--trait); background: rgba(23, 16, 43, .7); backdrop-filter: blur(6px);
+/* bandeau « En direct » : fine barre sous le menu, sur toute la largeur */
+.fil-direct {
+  display: flex; align-items: stretch; height: 34px; overflow: hidden;
+  background: rgba(13, 8, 34, .55); backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(245, 200, 107, .18); font-size: .8rem;
 }
 .fil-etiquette {
-  flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; z-index: 1;
-  background: var(--danger); color: #fff; font: 700 .72rem var(--corps); letter-spacing: .12em; text-transform: uppercase;
+  flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px 0 max(16px, calc((100% - 1160px) / 2));
+  color: #ff8a9b; font: 700 .66rem var(--corps); letter-spacing: .16em; text-transform: uppercase;
+  background: linear-gradient(90deg, rgba(13, 8, 34, .9) 70%, transparent);
 }
-.fil-etiquette::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: pulse 1.4s ease-in-out infinite; }
-@keyframes pulse { 50% { opacity: .25; transform: scale(.7); } }
-.fil-piste { flex: 1; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
-.fil-defile { display: flex; width: max-content; animation: defiler 40s linear infinite; }
-.fil:hover .fil-defile { animation-play-state: paused; }
+.fil-etiquette::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #ff5f7a; box-shadow: 0 0 8px #ff5f7a; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; transform: scale(.7); } }
+.fil-piste { flex: 1; overflow: hidden; display: flex; align-items: center; mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); }
+.fil-defile { display: flex; align-items: center; width: max-content; animation: defiler 55s linear infinite; }
+.fil-direct:hover .fil-defile { animation-play-state: paused; }
 @keyframes defiler { to { transform: translateX(-50%); } }
-.fil-item { display: inline-flex; align-items: center; gap: 10px; padding: 8px 0 8px 18px; white-space: nowrap; font-size: .9rem; }
-.fil-item a { text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-.fil-item a:hover b { color: var(--or); }
-.fil-item i { color: var(--or); font-style: normal; margin-left: 8px; }
+.fil-item { display: inline-flex; align-items: center; gap: 8px; padding-left: 16px; white-space: nowrap; color: var(--faible); }
+.fil-item a, .fil-item > span { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.fil-item b { color: var(--texte); font-weight: 700; }
+.fil-item a:hover, .fil-item a:hover b { color: var(--or); }
+.fil-item .jeu-tag { font-size: .6rem; padding: 1px 6px; }
+.fil-item small { opacity: .7; }
+.fil-item i { color: rgba(245, 200, 107, .55); font-style: normal; margin-left: 8px; font-size: .7rem; }
+.fil-fort b { color: var(--or); }
+.fil-encours b { color: #ff8a9b; }
 
 /* boutons : halo lumineux au survol */
 .btn { position: relative; overflow: hidden; }
@@ -1118,7 +1125,7 @@ img[data-zoom] { cursor: zoom-in; }
 @keyframes respire { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--or) 18%, transparent); } }
 
 @media (prefers-reduced-motion: reduce) {
-  #app.entree > *, #app.entree .perso, .compteur-c, .compteur-c::after, .fil-defile, .portrait-zone .aura, .logo span, .deroulant { animation: none !important; }
+  #app.entree > *, #app.entree .perso, .compteur-c, .compteur-c::after, .fil-defile, .fil-etiquette::before, .portrait-zone .aura, .logo span, .deroulant { animation: none !important; }
 }
 @media (max-width: 720px) {
   .portrait-zone { max-width: 240px; }
