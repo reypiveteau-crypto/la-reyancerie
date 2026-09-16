@@ -236,9 +236,17 @@
     const fil = [
       ...builds.slice(0, 6).map((b) => ({ d: b.created_at, h: `<a href="#/build/${esc(b.id)}">${pastilleJeu(b.game)} <b>${esc((auteurs[b.author_id] || {}).username || "Un membre")}</b> a partagé son build ${de(b.character)}</a>` })),
       ...mems.slice(0, 6).map((m) => ({ d: m.created_at, h: `<span>${pastilleJeu(m.game)} <b>${esc((auteurs[m.author_id] || {}).username || "Un membre")}</b> a ajouté « ${esc(m.title)} »</span>` }))
-    ].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 8).map((x) => `<span class="fil-item">${x.h}<i>✦</i></span>`);
+    ].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 8).map((x) => x.h);
+    const infos = [
+      ...actifs.slice(0, 2).map((e) => `<a class="fil-fort fil-${statut(e)}" href="#/evenement/${esc(e.id)}">${(TYPES[e.type] || {}).icone || ""} <b>${statut(e) === "encours" ? "En cours" : "Bientôt"}</b> ${esc(e.title)}${statut(e) === "encours" ? "" : ` <small>${esc(dateFr(e.starts_at, true))}</small>`}</a>`),
+      `<span class="fil-fort"><b>${buildsJour}</b> nouveau${buildsJour > 1 ? "x" : ""} build${buildsJour > 1 ? "s" : ""} aujourd'hui</span>`,
+      `<span class="fil-fort"><b>${memsSemaine}</b> souvenir${memsSemaine > 1 ? "s" : ""} cette semaine</span>`,
+      top ? `<a class="fil-fort" href="#/build/${esc(top.id)}"><b>♥ ${top.like_count}</b> Build le plus aimé : ${esc(top.character)}</a>` : ""
+    ].filter(Boolean);
+    const elements = [...infos, ...fil].map((h) => `<span class="fil-item">${h}<i aria-hidden="true">✦</i></span>`).join("");
+    const bandeau = `<span class="fil-etiquette">En direct</span><div class="fil-piste"><div class="fil-defile">${elements}${elements.replace(/<a /g, '<a tabindex="-1" ')}</div></div>`;
 
-    return `
+    return { apres: () => { const f = document.getElementById("fil-direct"); f.innerHTML = bandeau; }, html: `
     <section class="accueil-tete">
       <h1 class="sr">${esc(CFG.NOM_SITE)}</h1>
       ${ME ? `<p class="bienvenue">Content de te revoir, <b>${esc(ME.username)}</b></p>` : `<button class="btn btn-discord" data-action="login">Se connecter avec Discord</button>`}
@@ -251,15 +259,6 @@
         ["souvenirs", mems.length, "Souvenirs & créations", "M3 5h18v14H3Zm2 12h14l-4.5-6-3.5 4.5-2.5-3Z"],
         ["persos", nbPersos, "Personnages répertoriés", "M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1Z"]
       ].map(([k, n, l, d], i) => `<div class="compteur-c" style="--i:${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor"/></svg><b data-compte="${n}">${n}</b><span>${l}</span></div>`).join("")}
-    </section>
-
-    ${fil.length ? `<section class="fil" aria-label="Activité récente"><span class="fil-etiquette">En direct</span><div class="fil-piste"><div class="fil-defile">${(fil.join("") + fil.join(""))}</div></div></section>` : ""}
-
-    <section class="pouls" aria-label="En ce moment">
-      ${actifs.slice(0, 2).map((e) => `<a class="pouls-item pouls-${statut(e)}" href="#/evenement/${esc(e.id)}"><b>${(TYPES[e.type] || {}).icone || ""} ${statut(e) === "encours" ? "En cours" : "Bientôt"}</b> ${esc(e.title)} <span class="faible">${statut(e) === "encours" ? "" : "· " + esc(dateFr(e.starts_at, true))}</span></a>`).join("")}
-      <div class="pouls-item"><b>${buildsJour}</b> nouveau${buildsJour > 1 ? "x" : ""} build${buildsJour > 1 ? "s" : ""} aujourd'hui</div>
-      <div class="pouls-item"><b>${memsSemaine}</b> souvenir${memsSemaine > 1 ? "s" : ""} cette semaine</div>
-      ${top ? `<a class="pouls-item" href="#/build/${esc(top.id)}"><b>♥ ${top.like_count}</b> Build le plus aimé : ${esc(top.character)}</a>` : ""}
     </section>
 
     <section class="bloc">
@@ -277,7 +276,7 @@
     <section class="bloc">
       <div class="bloc-tete"><h2>Souvenirs et créations récents</h2><a href="#/memoire" class="lien">Toute la mémoire →</a></div>
       <div class="grille">${mems.slice(0, 3).map((m) => carteSouvenir(m, auteurs)).join("") || vide("Aucun souvenir pour l'instant.")}</div>
-    </section>`;
+    </section>` };
   };
 
   pages.memoire = async (_, q) => {
@@ -933,6 +932,7 @@
     if (themeCourant === "wuwa") DecorWuwa.allumer(); else DecorWuwa.eteindre();
     if (themeCourant === "nte") DecorNTE.allumer(); else DecorNTE.eteindre();
     document.getElementById("banniere-accueil").hidden = nom !== "accueil";
+    document.getElementById("fil-direct").hidden = nom !== "accueil";
     // hors des espaces jeux : décor animé de la plateforme
     if (!themeCourant) { document.documentElement.dataset.decor = "accueil"; DecorAccueil.allumer(); }
     else { delete document.documentElement.dataset.decor; DecorAccueil.eteindre(); }
