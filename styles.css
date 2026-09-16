@@ -18,6 +18,14 @@
   --rayon: 14px;
   --titre: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
   --corps: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --entete-bg: rgba(23, 16, 43, .86);
+  --sous-nav-bg: rgba(31, 22, 56, .92);
+  --rang5: #f5c86b;
+  --rang4: #c9a2ff;
+  --corps-fond:
+    radial-gradient(1100px 500px at 85% -120px, rgba(140, 90, 255, .28), transparent 70%),
+    radial-gradient(800px 420px at -10% 10%, rgba(245, 200, 107, .08), transparent 70%),
+    #17102b;
   color-scheme: dark;
 }
 
@@ -28,10 +36,7 @@ body {
   margin: 0;
   color: var(--texte);
   font: 16px/1.55 var(--corps);
-  background:
-    radial-gradient(1100px 500px at 85% -120px, rgba(140, 90, 255, .28), transparent 70%),
-    radial-gradient(800px 420px at -10% 10%, rgba(245, 200, 107, .08), transparent 70%),
-    var(--fond);
+  background: var(--corps-fond);
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -54,7 +59,7 @@ p { margin: 0; }
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
   display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
   padding: 12px max(16px, calc((100% - 1160px) / 2));
-  background: rgba(23, 16, 43, .86);
+  background: var(--entete-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--trait);
 }
@@ -367,8 +372,8 @@ a.perso-tag:hover { background: var(--or); color: var(--or-fonce); }
   display: grid; justify-items: center; line-height: 1.15; text-align: center;
 }
 .perso-nom { font-family: var(--titre); font-weight: 600; font-size: .95rem; }
-.etoiles { font-size: .72rem; letter-spacing: 1px; color: #c9a2ff; }
-.etoiles.r5 { color: var(--or); }
+.etoiles { font-size: .72rem; letter-spacing: 1px; color: var(--rang4); }
+.etoiles.r5 { color: var(--rang5); }
 
 .fiche-perso { display: grid; gap: 32px; }
 .perso-tete { display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: 32px; align-items: center; }
@@ -390,7 +395,7 @@ a.perso-tag:hover { background: var(--or); color: var(--or-fonce); }
 .sous-nav {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 5;
   display: flex; gap: 6px; overflow-x: auto; padding: 8px; border-radius: 999px;
-  background: rgba(31, 22, 56, .92); backdrop-filter: blur(10px); border: 1px solid var(--trait);
+  background: var(--sous-nav-bg); backdrop-filter: blur(10px); border: 1px solid var(--trait);
 }
 .ancre {
   flex: none; font: 600 .9rem var(--corps); color: var(--texte); cursor: pointer;
@@ -538,3 +543,248 @@ img[data-zoom] { cursor: zoom-in; }
 .modo-signalements { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); border-radius: 10px; padding: 10px 14px; }
 .modo-signalements b { color: var(--danger); }
 .modo-signalements ul { margin: 4px 0 0; padding-left: 18px; }
+
+/* ============================================================
+   BANNIÈRE D'ACCUEIL — toute la largeur de l'écran
+   ============================================================ */
+.banniere-accueil { width: 100%; background: var(--fond-2); border-bottom: 1px solid var(--trait); }
+.banniere-accueil img {
+  display: block; width: 100%; max-width: 100%; height: auto;
+  aspect-ratio: 4 / 1; object-fit: cover; object-position: center;
+}
+@media (max-width: 640px) { .banniere-accueil img { aspect-ratio: 16 / 7; } }
+
+/* ============================================================
+   ÉLÉMENTS COMMUNS AUX ESPACES JEUX
+   ============================================================ */
+.onglets-jeux { display: flex; gap: 6px; flex-wrap: wrap; }
+.onglets-jeux a {
+  text-decoration: none; font: 700 .85rem var(--corps); letter-spacing: .04em;
+  padding: 7px 14px; border-radius: 999px; color: var(--faible);
+  border: 1px solid var(--trait); background: var(--surface);
+}
+.onglets-jeux a:hover { color: var(--texte); }
+.onglets-jeux a.on { color: var(--or-fonce); background: var(--or); border-color: var(--or); }
+.jeu-tete { position: relative; }
+.carte-identite { margin: 0; display: grid; gap: 1px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); background: var(--trait); border: 1px solid var(--trait); border-radius: var(--rayon); overflow: hidden; }
+.carte-identite div { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; }
+.carte-identite dt { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--faible); font-weight: 700; }
+.carte-identite dd { margin: 0; font-weight: 700; }
+.carte-identite .etoiles { font-size: 1rem; }
+
+/* ============================================================
+   1. GENSHIN — « Carnet de Teyvat »
+   Violet de nuit et or, cadres dorés comme un grimoire.
+   ============================================================ */
+[data-jeu="genshin"] .jeu-tete {
+  padding: 28px 28px 26px; border-radius: 22px;
+  background:
+    radial-gradient(circle at 92% 20%, rgba(245, 200, 107, .18), transparent 40%),
+    linear-gradient(135deg, #2a1d4d, #1b1335);
+  border: 1px solid rgba(245, 200, 107, .35);
+  box-shadow: inset 0 0 0 6px #1b1335, inset 0 0 0 7px rgba(245, 200, 107, .25);
+}
+[data-jeu="genshin"] .jeu-tete h1 { color: #fbe7b5; }
+[data-jeu="genshin"] .perso { box-shadow: inset 0 0 0 3px rgba(12, 8, 26, .6), inset 0 0 0 4px rgba(245, 200, 107, .25); }
+
+/* ============================================================
+   2. HONKAI: STAR RAIL — « Billet de l'Express astral »
+   Encre de nuit, poussière d'étoiles, cartes découpées comme
+   des tickets de train avec perforation et coins poinçonnés.
+   ============================================================ */
+[data-jeu="hsr"] {
+  --fond: #070b1d; --fond-2: #0c1230; --surface: #111a3d; --surface-2: #1b2656; --trait: #2c3a78;
+  --texte: #eef1ff; --faible: #9aa6d6; --or: #e9cf8f; --or-fonce: #1a1405;
+  --rang5: #e9cf8f; --rang4: #b9a4ff;
+  --titre: "Chakra Petch", "Trebuchet MS", sans-serif;
+  --rayon: 6px;
+  --entete-bg: rgba(7, 11, 29, .88); --sous-nav-bg: rgba(12, 18, 48, .94);
+  --corps-fond:
+    radial-gradient(1.2px 1.2px at 12% 18%, #fff 60%, transparent 61%),
+    radial-gradient(1px 1px at 68% 8%, #cfd8ff 60%, transparent 61%),
+    radial-gradient(1.4px 1.4px at 82% 42%, #fff 60%, transparent 61%),
+    radial-gradient(1px 1px at 34% 64%, #b9a4ff 60%, transparent 61%),
+    radial-gradient(1.2px 1.2px at 52% 88%, #fff 60%, transparent 61%),
+    radial-gradient(1px 1px at 91% 76%, #e9cf8f 60%, transparent 61%),
+    radial-gradient(900px 500px at 100% 0%, rgba(185, 164, 255, .18), transparent 70%),
+    radial-gradient(700px 500px at 0% 100%, rgba(233, 207, 143, .08), transparent 70%),
+    #070b1d;
+}
+[data-jeu="hsr"] body { background-size: 420px 420px, 380px 380px, 460px 460px, 300px 300px, 520px 520px, 360px 360px, auto, auto, auto; }
+[data-jeu="hsr"] h1, [data-jeu="hsr"] h2 { text-transform: uppercase; letter-spacing: .04em; }
+[data-jeu="hsr"] .jeu-tete {
+  padding: 26px 30px; border-radius: 10px;
+  background: linear-gradient(100deg, #151f4a 0 72%, #0e1638 72% 100%);
+  border: 1px solid #3a4a93;
+  -webkit-mask: radial-gradient(circle 14px at 72% 0, transparent 98%, #000) , radial-gradient(circle 14px at 72% 100%, transparent 98%, #000);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
+[data-jeu="hsr"] .jeu-tete::before {
+  content: "BILLET · EXPRESS ASTRAL · VOIE LACTÉE"; position: absolute; top: 12px; right: 3%;
+  font: 700 .62rem var(--titre); letter-spacing: .3em; color: var(--or); opacity: .8;
+  writing-mode: vertical-rl; height: calc(100% - 24px); text-align: center;
+}
+[data-jeu="hsr"] .jeu-tete::after {
+  content: ""; position: absolute; top: 14px; bottom: 14px; left: 72%;
+  border-left: 2px dashed rgba(233, 207, 143, .45);
+}
+[data-jeu="hsr"] .jeu-tete > * { max-width: 66%; }
+[data-jeu="hsr"] .jeu-tete h1 { color: var(--or); font-size: clamp(2rem, 5vw, 3.4rem); }
+[data-jeu="hsr"] .perso {
+  border-radius: 4px; border: 1px solid #3a4a93;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--el) 35%, #121a3e), #0a1030 80%);
+  -webkit-mask: radial-gradient(circle 9px at 0 0, transparent 98%, #000) top left / 51% 51% no-repeat,
+                radial-gradient(circle 9px at 100% 0, transparent 98%, #000) top right / 51% 51% no-repeat,
+                radial-gradient(circle 9px at 0 100%, transparent 98%, #000) bottom left / 51% 51% no-repeat,
+                radial-gradient(circle 9px at 100% 100%, transparent 98%, #000) bottom right / 51% 51% no-repeat;
+}
+[data-jeu="hsr"] .perso:hover { transform: translateY(-3px) rotate(-1deg); }
+[data-jeu="hsr"] .perso-bas {
+  background: linear-gradient(transparent, rgba(7, 11, 29, .95) 45%);
+  border-top: 2px dashed rgba(233, 207, 143, .5); margin: 0 8px; left: 0; right: 0; padding-top: 10px;
+  bottom: 0; background-clip: padding-box;
+}
+[data-jeu="hsr"] .perso-nom { font-family: var(--titre); text-transform: uppercase; letter-spacing: .05em; font-size: .82rem; }
+[data-jeu="hsr"] .perso-el { border-radius: 3px; transform: rotate(45deg); }
+[data-jeu="hsr"] .perso-el svg { transform: rotate(-45deg); }
+[data-jeu="hsr"] .puce, [data-jeu="hsr"] .onglets-jeux a, [data-jeu="hsr"] .btn, [data-jeu="hsr"] .filtres-roster input, [data-jeu="hsr"] .deroulant {
+  border-radius: 3px; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  font-family: var(--titre); text-transform: uppercase; letter-spacing: .06em;
+}
+[data-jeu="hsr"] .perso-portrait { border-radius: 8px; box-shadow: 0 0 0 1px #3a4a93, 0 0 0 7px #0c1230, 0 0 0 8px rgba(233, 207, 143, .5), 0 30px 60px -30px var(--el); }
+[data-jeu="hsr"] .perso-id h1 { color: var(--or); }
+[data-jeu="hsr"] .sous-nav { border-radius: 4px; }
+
+/* ============================================================
+   3. WUTHERING WAVES — « Terminal de résonance »
+   Noir profond, grille technique, turquoise, coins en crochets
+   façon interface de scan et numéros de série.
+   ============================================================ */
+[data-jeu="wuwa"] {
+  --fond: #050908; --fond-2: #0a1312; --surface: #0d1918; --surface-2: #142725; --trait: #1f3d3a;
+  --texte: #e6fffa; --faible: #86b2ab; --or: #3ee6c1; --or-fonce: #02140f;
+  --rang5: #f2d86b; --rang4: #a98bff;
+  --titre: "Rajdhani", "Arial Narrow", sans-serif;
+  --rayon: 0px;
+  --entete-bg: rgba(5, 9, 8, .9); --sous-nav-bg: rgba(10, 19, 18, .95);
+  --corps-fond:
+    linear-gradient(rgba(62, 230, 193, .05) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, rgba(62, 230, 193, .05) 1px, transparent 1px) 0 0 / 44px 44px,
+    radial-gradient(900px 480px at 50% -10%, rgba(62, 230, 193, .14), transparent 70%),
+    #050908;
+}
+[data-jeu="wuwa"] h1, [data-jeu="wuwa"] h2, [data-jeu="wuwa"] h3 { text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+[data-jeu="wuwa"] .grille-persos { counter-reset: resonateur; }
+[data-jeu="wuwa"] .jeu-tete {
+  padding: 30px 28px 24px; background: linear-gradient(90deg, rgba(62, 230, 193, .1), transparent 60%);
+  border-left: 3px solid var(--or);
+}
+[data-jeu="wuwa"] .jeu-tete::before {
+  content: "// RÉSONANCE DÉTECTÉE — ARCHIVE DES RÉSONATEURS"; font: 600 .72rem var(--titre); letter-spacing: .3em; color: var(--or);
+}
+[data-jeu="wuwa"] .jeu-tete::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--or), transparent);
+  animation: scan 4s linear infinite;
+}
+@keyframes scan { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(160px); opacity: 0; } }
+[data-jeu="wuwa"] .jeu-tete h1 { font-size: clamp(2.2rem, 6vw, 4rem); letter-spacing: .12em; }
+[data-jeu="wuwa"] .perso {
+  counter-increment: resonateur;
+  border-radius: 0; border: 1px solid #1f3d3a; background: #0a1312;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+}
+[data-jeu="wuwa"] .perso::before, [data-jeu="wuwa"] .perso::after {
+  content: ""; position: absolute; width: 14px; height: 14px; z-index: 2; pointer-events: none;
+  border: 2px solid var(--el);
+}
+[data-jeu="wuwa"] .perso::before { top: 5px; right: 5px; border-left: 0; border-bottom: 0; }
+[data-jeu="wuwa"] .perso::after { bottom: 5px; left: 5px; border-right: 0; border-top: 0; }
+[data-jeu="wuwa"] .perso:hover { transform: none; border-color: var(--el); box-shadow: inset 0 0 24px color-mix(in srgb, var(--el) 30%, transparent); }
+[data-jeu="wuwa"] .perso img { filter: saturate(.85) contrast(1.05); }
+[data-jeu="wuwa"] .perso-bas {
+  justify-items: start; text-align: left; padding: 22px 10px 8px;
+  background: linear-gradient(transparent, rgba(5, 9, 8, .96) 50%);
+}
+[data-jeu="wuwa"] .perso-bas::before {
+  content: "RS-" counter(resonateur, decimal-leading-zero); font: 600 .62rem var(--titre); letter-spacing: .2em; color: var(--el);
+}
+[data-jeu="wuwa"] .perso-nom { font-family: var(--titre); text-transform: uppercase; letter-spacing: .08em; font-size: .95rem; }
+[data-jeu="wuwa"] .perso-el { border-radius: 0; background: transparent; top: 6px; left: 6px; }
+[data-jeu="wuwa"] .perso-compte { border-radius: 0; top: auto; bottom: 22px; right: 6px; }
+[data-jeu="wuwa"] .puce, [data-jeu="wuwa"] .onglets-jeux a, [data-jeu="wuwa"] .btn, [data-jeu="wuwa"] .filtres-roster input, [data-jeu="wuwa"] .deroulant, [data-jeu="wuwa"] .sous-nav, [data-jeu="wuwa"] .ancre {
+  border-radius: 0; font-family: var(--titre); text-transform: uppercase; letter-spacing: .1em;
+}
+[data-jeu="wuwa"] .puce.on { background: transparent; box-shadow: inset 0 -2px 0 var(--c); }
+[data-jeu="wuwa"] .perso-portrait {
+  border-radius: 0; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%);
+  box-shadow: none; border: 1px solid var(--el);
+}
+[data-jeu="wuwa"] .perso-id h1 { letter-spacing: .1em; }
+[data-jeu="wuwa"] .carte, [data-jeu="wuwa"] .panneau, [data-jeu="wuwa"] .carte-identite, [data-jeu="wuwa"] .vide { border-radius: 0; }
+
+/* ============================================================
+   4. NEVERNESS TO EVERNESS — « Néons de Hethereau »
+   Nuit urbaine prune, rose néon et jaune fluo, trame
+   d'impression, cartes-stickers avec ombre décalée et
+   étiquette en ruban adhésif.
+   ============================================================ */
+[data-jeu="nte"] {
+  --fond: #0f0714; --fond-2: #180b20; --surface: #1f1029; --surface-2: #2d1839; --trait: #4a2458;
+  --texte: #fff3fb; --faible: #c79ec0; --or: #ff3d8b; --or-fonce: #fff;
+  --rang5: #ffe14d; --rang4: #7ee8ff;
+  --titre: "Unbounded", "Arial Black", sans-serif;
+  --rayon: 22px;
+  --entete-bg: rgba(15, 7, 20, .9); --sous-nav-bg: rgba(24, 11, 32, .95);
+  --corps-fond:
+    radial-gradient(rgba(255, 61, 139, .12) 1.2px, transparent 1.4px) 0 0 / 14px 14px,
+    radial-gradient(900px 520px at 0% 0%, rgba(255, 61, 139, .22), transparent 65%),
+    radial-gradient(800px 520px at 100% 30%, rgba(126, 232, 255, .12), transparent 65%),
+    #0f0714;
+}
+[data-jeu="nte"] h1, [data-jeu="nte"] h2 { font-weight: 800; letter-spacing: -.01em; }
+[data-jeu="nte"] .jeu-tete { padding: 30px 6px 10px; }
+[data-jeu="nte"] .jeu-tete .surtitre {
+  justify-self: start; background: #ffe14d; color: #1a0a12; padding: 4px 14px;
+  transform: rotate(-3deg); box-shadow: 3px 3px 0 #ff3d8b; letter-spacing: .2em;
+}
+[data-jeu="nte"] .jeu-tete h1 {
+  font-size: clamp(2.2rem, 7vw, 4.8rem); line-height: .95; color: transparent;
+  -webkit-text-stroke: 2px #ff3d8b; text-shadow: 5px 5px 0 rgba(126, 232, 255, .35);
+}
+[data-jeu="nte"] .grille-persos { gap: 18px; }
+[data-jeu="nte"] .perso {
+  border-radius: 22px; border: 3px solid #fff3fb;
+  background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--el) 70%, #1f1029), #1f1029 75%);
+  box-shadow: 6px 6px 0 var(--el);
+}
+[data-jeu="nte"] .perso:nth-child(odd):hover { transform: rotate(-2.5deg) scale(1.03); }
+[data-jeu="nte"] .perso:nth-child(even):hover { transform: rotate(2.5deg) scale(1.03); }
+[data-jeu="nte"] .perso-bas { background: none; padding: 0 0 10px; }
+[data-jeu="nte"] .perso-nom {
+  font-family: var(--titre); font-weight: 800; font-size: .72rem; text-transform: uppercase;
+  background: #ffe14d; color: #1a0a12; padding: 3px 10px; transform: rotate(-4deg);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .35);
+}
+[data-jeu="nte"] .perso:nth-child(even) .perso-nom { transform: rotate(3deg); }
+[data-jeu="nte"] .perso .etoiles { background: #1a0a12; padding: 0 8px; border-radius: 999px; margin-top: 4px; font-weight: 800; font-family: var(--titre); }
+[data-jeu="nte"] .perso-el { border: 2px solid #fff3fb; }
+[data-jeu="nte"] .perso-initiale { font-family: var(--titre); font-weight: 800; color: #fff3fb; opacity: .9; -webkit-text-stroke: 1px #1a0a12; }
+[data-jeu="nte"] .puce, [data-jeu="nte"] .onglets-jeux a, [data-jeu="nte"] .deroulant {
+  border: 2px solid #fff3fb; box-shadow: 3px 3px 0 var(--c, #ff3d8b); color: var(--texte); font-weight: 800;
+}
+[data-jeu="nte"] .puce.on, [data-jeu="nte"] .onglets-jeux a.on { background: var(--c, #ff3d8b); color: #1a0a12; }
+[data-jeu="nte"] .btn { box-shadow: 4px 4px 0 #ffe14d; border: 2px solid #fff3fb; font-weight: 800; }
+[data-jeu="nte"] .filtres-roster input { border: 2px solid #fff3fb; box-shadow: 4px 4px 0 #ff3d8b; }
+[data-jeu="nte"] .perso-portrait { border-radius: 30px; border: 4px solid #fff3fb; box-shadow: 10px 10px 0 var(--el); transform: rotate(-2deg); }
+[data-jeu="nte"] .perso-id h1 { color: #fff3fb; text-shadow: 4px 4px 0 var(--el); }
+[data-jeu="nte"] .carte, [data-jeu="nte"] .panneau, [data-jeu="nte"] .carte-identite { box-shadow: 5px 5px 0 rgba(255, 61, 139, .45); }
+
+@media (max-width: 720px) {
+  [data-jeu="hsr"] .jeu-tete > * { max-width: 100%; }
+  [data-jeu="hsr"] .jeu-tete::before, [data-jeu="hsr"] .jeu-tete::after { display: none; }
+  [data-jeu="hsr"] .jeu-tete { -webkit-mask: none; mask: none; }
+  [data-jeu="nte"] .grille-persos { gap: 12px; }
+  [data-jeu="nte"] .perso { box-shadow: 4px 4px 0 var(--el); border-width: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { [data-jeu="wuwa"] .jeu-tete::after { animation: none; display: none; } }
