@@ -545,14 +545,61 @@ img[data-zoom] { cursor: zoom-in; }
 .modo-signalements ul { margin: 4px 0 0; padding-left: 18px; }
 
 /* ============================================================
-   BANNIÈRE D'ACCUEIL — toute la largeur de l'écran
+   DÉCOR DE LA PLATEFORME + BANNIÈRE D'ACCUEIL
    ============================================================ */
-.banniere-accueil { width: 100%; background: var(--fond-2); border-bottom: 1px solid var(--trait); }
-.banniere-accueil img {
-  display: block; width: 100%; max-width: 100%; height: auto;
-  aspect-ratio: 4 / 1; object-fit: cover; object-position: center;
+[data-decor="accueil"] { background: #0d0822; }
+[data-decor="accueil"] body { background: transparent; }
+[data-decor="accueil"] .entete { background: rgba(13, 8, 34, .7); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.banniere-accueil { position: relative; width: 100%; border-bottom: 1px solid rgba(245, 200, 107, .35); }
+/* Image personnalisée (banniere.png) : elle recouvre la bannière dessinée */
+.bd-image { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 4 / 1; object-fit: cover; }
+.banniere-accueil.avec-image .bd { display: none; }
+@media (max-width: 640px) { .bd-image { aspect-ratio: 16 / 7; } }
+
+/* Bannière dessinée, dans l'esprit de l'en-tête Genshin */
+.bd {
+  position: relative; overflow: hidden;
+  padding: clamp(28px, 5vw, 56px) 16px;
+  background:
+    linear-gradient(90deg, rgba(13, 8, 34, .85), rgba(13, 8, 34, .35) 30%, rgba(13, 8, 34, .35) 70%, rgba(13, 8, 34, .85)),
+    radial-gradient(ellipse at 50% 120%, rgba(245, 200, 107, .22), transparent 60%);
 }
-@media (max-width: 640px) { .banniere-accueil img { aspect-ratio: 16 / 7; } }
+.bd::before, .bd::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 200, 107, .7) 20%, rgba(245, 200, 107, .7) 80%, transparent);
+}
+.bd::before { top: 10px; } .bd::after { bottom: 10px; }
+.bd-cadre {
+  position: relative; max-width: 900px; margin: 0 auto; text-align: center;
+  padding: clamp(22px, 4vw, 38px) clamp(16px, 4vw, 48px);
+  border: 1px solid rgba(245, 200, 107, .55);
+  background: linear-gradient(180deg, rgba(40, 28, 80, .72), rgba(23, 15, 51, .82));
+  box-shadow: inset 0 0 0 6px rgba(13, 8, 34, .85), inset 0 0 0 7px rgba(245, 200, 107, .3), 0 30px 60px -30px #000, 0 0 80px -20px rgba(201, 162, 255, .45);
+  backdrop-filter: blur(3px);
+}
+.bd-cadre::before, .bd-cadre::after {
+  content: "✦"; position: absolute; left: 50%; transform: translate(-50%, -50%);
+  color: #f5c86b; background: #221640; padding: 0 12px; line-height: 1; font-size: 1.1rem;
+}
+.bd-cadre::before { top: 0; } .bd-cadre::after { top: 100%; }
+.bd-sur { font: 700 .72rem var(--corps); letter-spacing: .5em; text-transform: uppercase; color: #e9dcff; }
+.bd-sur span { color: #f5c86b; letter-spacing: 0; }
+.bd-titre {
+  margin: 8px 0 14px; line-height: 1.05;
+  font-family: "Cinzel", Georgia, serif; font-weight: 700;
+  font-size: clamp(2.4rem, 8vw, 5.4rem); letter-spacing: .04em;
+  background: linear-gradient(180deg, #fff4d6 10%, #f5c86b 55%, #b98b3e); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .4)) drop-shadow(0 0 24px rgba(245, 200, 107, .3));
+  animation: bd-entree 1.2s ease-out both;
+}
+.bd-article { font-size: .55em; vertical-align: .35em; margin-right: .1em; }
+@keyframes bd-entree { from { opacity: 0; letter-spacing: .3em; } to { opacity: 1; letter-spacing: .04em; } }
+.bd-jeux { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-weight: 700; font-size: .92rem; color: #e9dcff; }
+.bd-jeux span { display: inline-flex; align-items: center; gap: 8px; }
+.bd-jeux i { width: 9px; height: 9px; transform: rotate(45deg); background: var(--c); box-shadow: 0 0 10px var(--c); }
+@media (prefers-reduced-motion: reduce) { .bd-titre { animation: none; } }
 
 /* ============================================================
    ÉLÉMENTS COMMUNS AUX ESPACES JEUX
@@ -920,7 +967,7 @@ img[data-zoom] { cursor: zoom-in; }
 @media (prefers-reduced-motion: reduce) { [data-jeu="wuwa"] .jeu-tete::after { animation: none; display: none; } }
 
 /* ---------- décor animé Genshin (dessiné par app.js) */
-#decor-genshin, #decor-hsr { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+#decor-genshin, #decor-hsr, #decor-accueil { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 [data-jeu="genshin"], [data-jeu="genshin"] body { background: #070a22; }
 [data-jeu="genshin"] body { background: transparent; }
 [data-jeu="genshin"] .entete { background: rgba(10, 12, 32, .72); }
