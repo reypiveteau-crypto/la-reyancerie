@@ -1,54 +1,42 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>La Reyancerie — tous les personnages de Genshin Impact en français</title>
-<meta name="description" content="Les 119 personnages jouables de Genshin Impact en français : qui ils sont, leur élément, leur arme, et les builds détaillés (armes, artefacts, stats, équipes) en version 7.0.">
-<meta name="theme-color" content="#0b0e18">
-<meta property="og:title" content="La Reyancerie — personnages et builds Genshin Impact en français">
-<meta property="og:description" content="119 fiches personnages, builds vérifiés, noms d'armes et d'artefacts en français officiel.">
-<meta property="og:type" content="website">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La Reyancerie</title>
+  <meta name="description" content="La plateforme de la communauté : builds Genshin Impact, Honkai: Star Rail, Wuthering Waves et Neverness to Everness, événements et souvenirs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="bandeau-demo" class="bandeau-demo" hidden></div>
+  <header class="entete">
+    <a href="#/" class="logo">La <span>Reyancerie</span></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="#/" data-page="">Accueil</a>
+      <a href="#/jeux" data-page="jeux">Jeux</a>
+      <a href="#/memoire" data-page="memoire">Mémoire</a>
+      <a href="#/evenements" data-page="evenements">Événements</a>
+      <a href="#/communaute" data-page="communaute">Communauté</a>
+    </nav>
+    <div id="zone-compte" class="zone-compte"></div>
+  </header>
 
-<!-- le ciel : deux calques dessinés en canvas (voir ciel.js) -->
-<canvas id="aurore" aria-hidden="true"></canvas>
-<canvas id="ciel" aria-hidden="true"></canvas>
+  <main id="app" class="contenu"><p class="faible">Chargement…</p></main>
 
-<header class="site-header">
-  <div class="wrap header-inner">
-    <a class="brand" href="#">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
-          <path d="M12 2 21 7.2v9.6L12 22l-9-5.2V7.2L12 2Zm0 2.3L5 8.4v7.2l7 4.1 7-4.1V8.4l-7-4.1Zm0 3.2 4 2.3v4.4l-4 2.3-4-2.3v-4.4l4-2.3Z"/>
-        </svg>
-      </span>
-      <span class="brand-name">LA <span>REYANCERIE</span></span>
-    </a>
-    <span class="header-tag">Version <b>7.0</b> · Septembre 2026</span>
-  </div>
-</header>
+  <footer class="pied">
+    <p><b>La Reyancerie</b> — site communautaire non officiel, sans lien avec HoYoverse, Kuro Games ou Hotta Studio.</p>
+    <p id="lien-discord"></p>
+  </footer>
 
-<main class="wrap" id="app"></main>
-
-<footer class="site-footer">
-  <div class="wrap">
-    <p>Site de fan non officiel. Genshin Impact est une marque de HoYoverse ; ce site n'est ni affilié ni soutenu par HoYoverse.</p>
-    <p>Noms d'armes et d'artefacts en français officiel. Builds relevés en septembre 2026 sur
-       genshin-builds.com, prydwen.gg et game8.co. Un personnage sans build affiché est un personnage
-       dont le build n'a pas encore été vérifié — rien n'est inventé ici.</p>
-    <p>Aucun asset du jeu n'est utilisé : les pictogrammes d'éléments et d'armes sont des formes
-       originales dessinées pour ce site.</p>
-  </div>
-</footer>
-
-<script src="ciel.js"></script>
-<script src="data.js"></script>
-<script src="app.js"></script>
+  <!-- Bibliothèque Supabase (utilisée seulement quand config.js est rempli) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="data.js"></script>        <!-- les 119 fiches Genshin (ton fichier actuel, inchangé) -->
+  <script src="plateforme.js"></script>  <!-- les jeux de la plateforme, badges, démo -->
+  <script src="store.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
