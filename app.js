@@ -177,7 +177,7 @@
     const champs = g ? g.champs.filter((c) => b.fields && b.fields[c.cle]).slice(0, 2) : [];
     const img = urlSure((b.images || [])[0]);
     const nb = (b.images || []).length;
-    return `<a class="carte carte-build" href="#/build/${esc(b.id)}" style="--c:${g ? g.couleur : "#fff"}">
+    return `<a class="carte carte-build" data-tilt href="#/build/${esc(b.id)}" style="--c:${g ? g.couleur : "#fff"}">
       <div class="build-visuel">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span>${esc(b.character)}</span>`}${nb > 1 ? `<span class="nb-images">${nb} images</span>` : ""}</div>
       <div class="carte-haut">${pastilleJeu(b.game)}${pastilleAttente(b)}<span class="coeur ${b.liked ? "on" : ""}">♥ ${b.like_count}</span></div>
       <div class="build-perso">${esc(b.character)}</div>
@@ -231,12 +231,29 @@
     const actifs = evts.filter((e) => statut(e) !== "termine").sort((a, b) => a.starts_at.localeCompare(b.starts_at));
     const top = builds.slice().sort((a, b) => b.like_count - a.like_count)[0];
     const mesJeux = ME && ME.games && ME.games.length ? ME.games : JEUX.map((g) => g.slug);
+    const nbMembres = Object.keys(auteurs).length;
+    const nbPersos = JEUX.reduce((t, g) => t + (g.roster ? g.roster.length : 0), 0);
+    const fil = [
+      ...builds.slice(0, 6).map((b) => ({ d: b.created_at, h: `<a href="#/build/${esc(b.id)}">${pastilleJeu(b.game)} <b>${esc((auteurs[b.author_id] || {}).username || "Un membre")}</b> a partagé son build ${de(b.character)}</a>` })),
+      ...mems.slice(0, 6).map((m) => ({ d: m.created_at, h: `<span>${pastilleJeu(m.game)} <b>${esc((auteurs[m.author_id] || {}).username || "Un membre")}</b> a ajouté « ${esc(m.title)} »</span>` }))
+    ].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 8).map((x) => `<span class="fil-item">${x.h}<i>✦</i></span>`);
 
     return `
     <section class="accueil-tete">
       <h1 class="sr">${esc(CFG.NOM_SITE)}</h1>
       ${ME ? `<p class="bienvenue">Content de te revoir, <b>${esc(ME.username)}</b></p>` : `<button class="btn btn-discord" data-action="login">Se connecter avec Discord</button>`}
     </section>
+
+    <section class="compteurs-accueil" aria-label="La communauté en chiffres">
+      ${[
+        ["membres", nbMembres, "Membres", "M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 10a9 9 0 0 1 18 0Z"],
+        ["builds", builds.length, "Builds partagés", "M4 4h10l6 6v10H4Zm9 1v6h6"],
+        ["souvenirs", mems.length, "Souvenirs & créations", "M3 5h18v14H3Zm2 12h14l-4.5-6-3.5 4.5-2.5-3Z"],
+        ["persos", nbPersos, "Personnages répertoriés", "M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1Z"]
+      ].map(([k, n, l, d], i) => `<div class="compteur-c" style="--i:${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor"/></svg><b data-compte="${n}">${n}</b><span>${l}</span></div>`).join("")}
+    </section>
+
+    ${fil.length ? `<section class="fil" aria-label="Activité récente"><span class="fil-etiquette">En direct</span><div class="fil-piste"><div class="fil-defile">${(fil.join("") + fil.join(""))}</div></div></section>` : ""}
 
     <section class="pouls" aria-label="En ce moment">
       ${actifs.slice(0, 2).map((e) => `<a class="pouls-item pouls-${statut(e)}" href="#/evenement/${esc(e.id)}"><b>${(TYPES[e.type] || {}).icone || ""} ${statut(e) === "encours" ? "En cours" : "Bientôt"}</b> ${esc(e.title)} <span class="faible">${statut(e) === "encours" ? "" : "· " + esc(dateFr(e.starts_at, true))}</span></a>`).join("")}
@@ -248,7 +265,7 @@
     <section class="bloc">
       <div class="bloc-tete"><h2>${ME ? "Tes jeux" : "Les jeux"}</h2><a href="#/jeux" class="lien">Tous les jeux →</a></div>
       <div class="grille grille-jeux">
-        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu tuile-${g.slug}" href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}<span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
+        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu tuile-${g.slug}" data-tilt href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}<span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
       </div>
     </section>
 
@@ -368,7 +385,7 @@
     <div class="grille grille-jeux-grands">
       ${JEUX.map((g) => {
         const nb = builds.filter((b) => b.game === g.slug).length, ns = mems.filter((m) => m.game === g.slug).length, nj = profils.filter((p) => (p.games || []).includes(g.slug)).length;
-        return `<a class="tuile-jeu tuile-grande tuile-${g.slug}" href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}
+        return `<a class="tuile-jeu tuile-grande tuile-${g.slug}" data-tilt href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}
           <span class="tuile-nom">${esc(g.nom)}</span>
           <span class="tuile-stats"><span><b>${nj}</b> joueur${nj > 1 ? "s" : ""}</span><span><b>${nb}</b> build${nb > 1 ? "s" : ""}</span><span><b>${ns}</b> souvenir${ns > 1 ? "s" : ""}</span></span>
         </a>`;
@@ -459,7 +476,7 @@
           <p class="faible roster-info"><span id="roster-compte"></span> <button type="button" class="lien-discret" data-filtre="reset">Effacer les filtres</button></p>
         </div>
         <div class="grille-persos" id="grille-persos">
-          ${roster.map((p) => cartePerso(g, p, compte[p.id] || 0)).join("")}
+          ${roster.map((p, i) => cartePerso(g, p, compte[p.id] || 0).replace('style="', `style="--i:${Math.min(i, 24)};`)).join("")}
         </div>
         <p class="vide" id="roster-vide" hidden>Aucun personnage ne correspond à ces filtres.</p>
         <button type="button" class="deroulant" id="roster-plus" data-roster-plus aria-expanded="false" aria-controls="grille-persos" hidden>
@@ -486,12 +503,13 @@
 
   function cartePerso(g, p, n) {
     const src = srcPortrait(g, p);
-    return `<a class="perso" title="${esc(p.nom)}" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
+    return `<a class="perso" data-tilt title="${esc(p.nom)}" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
       <span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>
       ${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-repli="cacher">` : ""}
       <span class="perso-el" title="${esc(p.element)}">${iconeEl(g, p.element, 15)}</span>
       ${n ? `<span class="perso-compte" title="${n} publication${n > 1 ? "s" : ""} de la communauté">${n}</span>` : ""}
       <span class="perso-bas"><span class="perso-nom">${esc(p.nom)}</span>${etoiles(g, p.rarete)}</span>
+      <span class="reflet" aria-hidden="true"></span>
     </a>`;
   }
 
@@ -602,7 +620,7 @@
     <article class="fiche-perso" style="--el:${couleurPerso(g, p)}">
       <a class="lien" href="#/jeu/${g.slug}">← Tous les personnages ${esc(g.court)}</a>
       <header class="perso-tete">
-        <div class="perso-portrait" data-rar="${p.rarete || ""}"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}</div>
+        <div class="portrait-zone"><span class="aura" aria-hidden="true"></span><div class="perso-portrait" data-tilt data-rar="${p.rarete || ""}"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}<span class="reflet" aria-hidden="true"></span></div></div>
         <div class="perso-id">
           <p class="surtitre">${esc(p.region || g.ui.theme)} · ${esc(g.nom)}</p>
           <h1>${esc(p.nom)}</h1>
@@ -900,6 +918,7 @@
       const r = await pages[nom](parts.slice(1), new URLSearchParams(qs || ""));
       $app.innerHTML = typeof r === "string" ? r : r.html;
       if (r && r.apres) r.apres();
+      Effets.apresRendu();
     } catch (err) {
       themeCourant = "";
       console.error(err);
@@ -911,6 +930,8 @@
     else delete document.documentElement.dataset.jeu;
     if (themeCourant === "genshin") DecorGenshin.allumer(); else DecorGenshin.eteindre();
     if (themeCourant === "hsr") DecorHSR.allumer(); else DecorHSR.eteindre();
+    if (themeCourant === "wuwa") DecorWuwa.allumer(); else DecorWuwa.eteindre();
+    if (themeCourant === "nte") DecorNTE.allumer(); else DecorNTE.eteindre();
     document.getElementById("banniere-accueil").hidden = nom !== "accueil";
     // hors des espaces jeux : décor animé de la plateforme
     if (!themeCourant) { document.documentElement.dataset.decor = "accueil"; DecorAccueil.allumer(); }
@@ -1628,6 +1649,294 @@
     }
     function eteindre() { actif = false; cancelAnimationFrame(raf); if (cv) cv.hidden = true; }
     return { allumer, eteindre };
+  })();
+
+  // ============================================================
+  //  FABRIQUE DE DÉCORS (toile plein écran, 30 images/s, pause
+  //  quand l'onglet est caché, immobile si « animations réduites »)
+  // ============================================================
+  function creerDecor(id, scene) {
+    let cv, ctx, actif = false, raf = 0, dernier = 0, attente;
+    const etat = { W: 0, H: 0, dpr: 1, calme: !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) };
+    const dessiner = (t) => { ctx.setTransform(etat.dpr, 0, 0, etat.dpr, 0, 0); scene.dessiner(ctx, etat, t); };
+    function boucle(t) { if (!actif) return; if (t - dernier > 33) { dessiner(t); dernier = t; } raf = requestAnimationFrame(boucle); }
+    function dimensionner() {
+      etat.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      etat.W = window.innerWidth; etat.H = window.innerHeight;
+      cv.width = etat.W * etat.dpr; cv.height = etat.H * etat.dpr;
+      scene.peindre(etat); dessiner(etat.calme ? 4000 : performance.now());
+    }
+    return {
+      allumer() {
+        if (!cv) {
+          cv = document.createElement("canvas"); cv.id = id; cv.className = "decor"; cv.setAttribute("aria-hidden", "true");
+          document.body.prepend(cv); ctx = cv.getContext("2d");
+          window.addEventListener("resize", () => { if (!actif) return; clearTimeout(attente); attente = setTimeout(dimensionner, 150); });
+          window.addEventListener("scroll", () => { if (actif && etat.calme) dessiner(4000); }, { passive: true });
+          document.addEventListener("visibilitychange", () => { if (actif && !document.hidden && !etat.calme) { cancelAnimationFrame(raf); raf = requestAnimationFrame(boucle); } });
+        }
+        if (actif) return;
+        actif = true; cv.hidden = false; dimensionner();
+        if (!etat.calme) raf = requestAnimationFrame(boucle);
+      },
+      eteindre() { actif = false; cancelAnimationFrame(raf); if (cv) cv.hidden = true; }
+    };
+  }
+  const toileHors = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+
+  // ------------------------------------------------------------
+  //  WUTHERING WAVES — « Champ de résonance »
+  //  Éclipse à couronne turquoise, spectre sonore ondulant, sol
+  //  quadrillé en perspective qui défile, fragments numériques et
+  //  parasites de signal.
+  // ------------------------------------------------------------
+  const DecorWuwa = creerDecor("decor-wuwa", (() => {
+    let fond, fragments = [], glitch = 0;
+    return {
+      peindre({ W, H, dpr }) {
+        fond = toileHors(W * dpr, H * dpr);
+        const g = fond.getContext("2d"); g.scale(dpr, dpr);
+        const ciel = g.createLinearGradient(0, 0, 0, H);
+        ciel.addColorStop(0, "#010403"); ciel.addColorStop(.6, "#041210"); ciel.addColorStop(1, "#08201c");
+        g.fillStyle = ciel; g.fillRect(0, 0, W, H);
+        for (let i = 0; i < W * H / 2500; i++) { g.fillStyle = `rgba(180,255,235,${Math.random() * .35})`; g.fillRect(Math.random() * W, Math.random() * H * .7, 1, 1); }
+        const ho = g.createLinearGradient(0, H * .55, 0, H * .75);
+        ho.addColorStop(0, "rgba(62,230,193,0)"); ho.addColorStop(.6, "rgba(62,230,193,.16)"); ho.addColorStop(1, "rgba(62,230,193,0)");
+        g.fillStyle = ho; g.fillRect(0, H * .55, W, H * .2);
+        fragments = Array.from({ length: Math.min(80, Math.round(W / 18)) }, () => ({ x: Math.random() * W, y: Math.random() * H, v: .2 + Math.random() * .6, s: 1 + Math.random() * 3, a: Math.random() }));
+      },
+      dessiner(ctx, { W, H, calme }, t) {
+        ctx.drawImage(fond, 0, 0, W, H);
+        const defil = Math.min(window.scrollY || 0, 1500);
+        // éclipse
+        const ex = W * (W > 900 ? .86 : .8), ey = H * .24 - defil * .08, er = Math.min(W, H) * (W > 900 ? .15 : .12);
+        ctx.save(); ctx.globalCompositeOperation = "lighter";
+        const cor = ctx.createRadialGradient(ex, ey, er * .9, ex, ey, er * 2.4);
+        cor.addColorStop(0, "rgba(120,255,225,.55)"); cor.addColorStop(.25, "rgba(62,230,193,.18)"); cor.addColorStop(1, "rgba(62,230,193,0)");
+        ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(ex, ey, er * 2.4, 0, 7); ctx.fill();
+        ctx.strokeStyle = "rgba(160,255,235,.25)"; ctx.lineWidth = 1;
+        for (let k = 0; k < 48; k++) {
+          const a = k / 48 * Math.PI * 2 + t * .00005, l = er * (1.15 + .35 * (.5 + .5 * Math.sin(k * 3.1 + t * .002)));
+          ctx.beginPath(); ctx.moveTo(ex + Math.cos(a) * er * 1.02, ey + Math.sin(a) * er * 1.02); ctx.lineTo(ex + Math.cos(a) * l, ey + Math.sin(a) * l); ctx.stroke();
+        }
+        ctx.restore();
+        ctx.fillStyle = "#010403"; ctx.beginPath(); ctx.arc(ex, ey, er, 0, 7); ctx.fill();
+        ctx.strokeStyle = "rgba(210,255,245,.95)"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ex, ey, er, 0, 7); ctx.stroke();
+        ctx.strokeStyle = "rgba(62,230,193,.5)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ex, ey, er * .8, t * .0004, t * .0004 + 4.2); ctx.stroke();
+        // sol en perspective
+        const hz = H * .7;
+        ctx.strokeStyle = "rgba(62,230,193,.22)"; ctx.lineWidth = 1;
+        for (let k = -14; k <= 14; k++) { ctx.beginPath(); ctx.moveTo(W / 2 + k * 18, hz); ctx.lineTo(W / 2 + k * W * .16, H); ctx.stroke(); }
+        const avance = calme ? 0 : (t * .00025) % 1;
+        for (let k = 0; k < 12; k++) {
+          const q = (k + avance) / 12, y = hz + (H - hz) * q * q;
+          ctx.globalAlpha = q; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        // spectre sonore
+        ctx.save(); ctx.globalCompositeOperation = "lighter";
+        for (let l = 0; l < 14; l++) {
+          const base = H * (.52 + l * .012);
+          ctx.strokeStyle = `rgba(${l % 3 ? "62,230,193" : "169,139,255"},${.08 + (l % 4) * .04})`; ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          for (let x = 0; x <= W; x += 8) {
+            const env = Math.exp(-Math.pow((x - W * .45) / (W * .28), 2));
+            const y = base + env * (Math.sin(x * .02 + t * .002 + l) * 18 + Math.sin(x * .053 - t * .003 + l * 2) * 8) * (1 + .4 * Math.sin(t * .0011 + l));
+            x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
+          ctx.stroke();
+        }
+        // fragments numériques qui montent
+        for (const f of fragments) {
+          if (!calme) { f.y -= f.v; if (f.y < -5) { f.y = H + 5; f.x = Math.random() * W; } }
+          const a = .25 + .5 * (.5 + .5 * Math.sin(t * .003 + f.a * 9));
+          ctx.fillStyle = `rgba(120,255,225,${a})`; ctx.fillRect(f.x, f.y, f.s, f.s);
+        }
+        ctx.restore();
+        // parasites de signal
+        if (!calme && Math.random() < .012) glitch = 6;
+        if (glitch > 0) {
+          glitch--;
+          const y = Math.random() * H, h = 4 + Math.random() * 20;
+          ctx.fillStyle = "rgba(62,230,193,.08)"; ctx.fillRect(0, y, W, h);
+          ctx.drawImage(ctx.canvas, 0, y * (ctx.canvas.width / W), ctx.canvas.width, h * (ctx.canvas.width / W), (Math.random() - .5) * 30, y, W, h);
+        }
+        const v = ctx.createLinearGradient(0, 0, 0, H);
+        v.addColorStop(0, "rgba(1,4,3,.25)"); v.addColorStop(1, "rgba(1,4,3,.5)");
+        ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+      }
+    };
+  })());
+
+  // ------------------------------------------------------------
+  //  NEVERNESS TO EVERNESS — « Hethereau sous la pluie »
+  //  Trois plans d'immeubles aux fenêtres qui s'allument, enseignes
+  //  néon qui grésillent, pluie oblique, véhicules volants et reflets
+  //  sur la chaussée mouillée.
+  // ------------------------------------------------------------
+  const DecorNTE = creerDecor("decor-nte", (() => {
+    let fond, plans = [], enseignes = [], pluie = [], vols = [];
+    const NEON = ["#ff3d8b", "#7ee8ff", "#ffe14d", "#b67cff"];
+    return {
+      peindre({ W, H, dpr }) {
+        fond = toileHors(W * dpr, H * dpr);
+        const g = fond.getContext("2d"); g.scale(dpr, dpr);
+        const ciel = g.createLinearGradient(0, 0, 0, H);
+        ciel.addColorStop(0, "#07030d"); ciel.addColorStop(.55, "#1a0a26"); ciel.addColorStop(1, "#3a0f3f");
+        g.fillStyle = ciel; g.fillRect(0, 0, W, H);
+        const halo = g.createRadialGradient(W * .5, H * .85, 0, W * .5, H * .85, W * .7);
+        halo.addColorStop(0, "rgba(255,61,139,.35)"); halo.addColorStop(1, "rgba(255,61,139,0)");
+        g.fillStyle = halo; g.fillRect(0, 0, W, H);
+        // lune derrière la brume
+        const lu = g.createRadialGradient(W * .2, H * .18, 0, W * .2, H * .18, H * .12);
+        lu.addColorStop(0, "rgba(255,230,250,.9)"); lu.addColorStop(.3, "rgba(255,190,230,.35)"); lu.addColorStop(1, "rgba(255,190,230,0)");
+        g.fillStyle = lu; g.beginPath(); g.arc(W * .2, H * .18, H * .12, 0, 7); g.fill();
+        plans = []; enseignes = [];
+        [[.42, .28, "#1b0d2b", 50, .05], [.55, .22, "#130820", 70, .1], [.68, .2, "#0a0512", 95, .18]].forEach(([hautMin, var_, coul, larg, vit], n) => {
+          const bat = []; let x = -20;
+          while (x < W + 20) {
+            const w = larg * (.6 + Math.random() * .9), h = H * (1 - hautMin - Math.random() * var_);
+            bat.push({ x, w, top: H - h, fen: [] });
+            x += w + (n === 2 ? 4 : 2);
+          }
+          bat.forEach((b) => {
+            for (let fy = b.top + 10; fy < H - 10; fy += 12 + n * 2) for (let fx = b.x + 6; fx < b.x + b.w - 6; fx += 10 + n * 2)
+              if (Math.random() < .28) b.fen.push({ x: fx, y: fy, on: Math.random() < .7, c: Math.random() < .8 ? "255,210,150" : "126,232,255" });
+            if (n > 0 && Math.random() < .35) enseignes.push({ plan: n, x: b.x + b.w * .2, y: b.top + 20 + Math.random() * 60, w: Math.max(14, b.w * .5), h: 6 + Math.random() * 10, c: NEON[Math.floor(Math.random() * 4)], p: Math.random() * 100 });
+            if (Math.random() < .3) b.antenne = 10 + Math.random() * 30;
+          });
+          plans.push({ bat, coul, vit });
+        });
+        pluie = Array.from({ length: Math.round(W * H / 6000) }, () => ({ x: Math.random() * W, y: Math.random() * H, l: 8 + Math.random() * 14, v: 8 + Math.random() * 6 }));
+        vols = Array.from({ length: 3 }, (_, i) => ({ x: Math.random() * W, y: H * (.2 + i * .1), v: (i % 2 ? -1 : 1) * (.6 + Math.random()) }));
+      },
+      dessiner(ctx, { W, H, calme }, t) {
+        ctx.drawImage(fond, 0, 0, W, H);
+        const defil = Math.min(window.scrollY || 0, 1500);
+        // véhicules volants
+        for (const v of vols) {
+          if (!calme) { v.x += v.v; if (v.x > W + 40) v.x = -40; if (v.x < -40) v.x = W + 40; }
+          const y = v.y + Math.sin(t * .001 + v.y) * 4;
+          ctx.fillStyle = "rgba(255,240,250,.95)"; ctx.fillRect(v.x, y, 3, 1.5);
+          ctx.fillStyle = "rgba(255,61,139,.9)"; ctx.fillRect(v.x - (v.v > 0 ? 6 : -6), y, 2, 1.5);
+          const tr = ctx.createLinearGradient(v.x, y, v.x - v.v * 40, y);
+          tr.addColorStop(0, "rgba(255,200,230,.35)"); tr.addColorStop(1, "rgba(255,200,230,0)");
+          ctx.fillStyle = tr; ctx.fillRect(Math.min(v.x, v.x - v.v * 40), y, Math.abs(v.v * 40), 1);
+        }
+        plans.forEach((pl, n) => {
+          const dy = -defil * pl.vit;
+          ctx.fillStyle = pl.coul;
+          for (const b of pl.bat) {
+            ctx.fillRect(b.x, b.top + dy, b.w, H - b.top + 200);
+            if (b.antenne) { ctx.fillRect(b.x + b.w / 2, b.top + dy - b.antenne, 2, b.antenne); if (Math.sin(t * .004 + b.x) > .6) { ctx.fillStyle = "#ff3d8b"; ctx.fillRect(b.x + b.w / 2 - 1, b.top + dy - b.antenne - 2, 4, 3); ctx.fillStyle = pl.coul; } }
+            for (const f of b.fen) {
+              if (!calme && Math.random() < .0008) f.on = !f.on;
+              if (f.on) { ctx.fillStyle = `rgba(${f.c},${.35 + n * .2})`; ctx.fillRect(f.x, f.y + dy, 3 + n, 4 + n); }
+            }
+            ctx.fillStyle = pl.coul;
+          }
+          ctx.save(); ctx.globalCompositeOperation = "lighter";
+          for (const e of enseignes) {
+            if (e.plan !== n) continue;
+            const scint = Math.sin(t * .01 + e.p) > -.92 ? 1 : .15;
+            ctx.shadowColor = e.c; ctx.shadowBlur = 16; ctx.globalAlpha = .9 * scint;
+            ctx.strokeStyle = e.c; ctx.lineWidth = 2; ctx.strokeRect(e.x, e.y + dy, e.w, e.h);
+            ctx.fillStyle = e.c; ctx.globalAlpha = .35 * scint; ctx.fillRect(e.x + 3, e.y + dy + 2, e.w - 6, Math.max(1, e.h - 4));
+          }
+          ctx.restore();
+        });
+        // chaussée mouillée et reflets
+        const sol = H * .9;
+        const rf = ctx.createLinearGradient(0, sol, 0, H);
+        rf.addColorStop(0, "rgba(40,10,50,.85)"); rf.addColorStop(1, "rgba(10,3,15,.95)");
+        ctx.fillStyle = rf; ctx.fillRect(0, sol, W, H - sol);
+        ctx.save(); ctx.globalCompositeOperation = "lighter";
+        for (const e of enseignes) {
+          const g = ctx.createLinearGradient(0, sol, 0, H);
+          g.addColorStop(0, e.c + "55"); g.addColorStop(1, e.c + "00");
+          ctx.fillStyle = g; ctx.fillRect(e.x + Math.sin(t * .002 + e.p) * 2, sol, Math.max(3, e.w * .4), H - sol);
+        }
+        // pluie
+        ctx.strokeStyle = "rgba(190,220,255,.28)"; ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (const r of pluie) {
+          if (!calme) { r.y += r.v; r.x -= r.v * .25; if (r.y > H) { r.y = -r.l; r.x = Math.random() * W * 1.2; } }
+          ctx.moveTo(r.x, r.y); ctx.lineTo(r.x - r.l * .25, r.y + r.l);
+        }
+        ctx.stroke();
+        ctx.restore();
+        const v = ctx.createLinearGradient(0, 0, 0, H);
+        v.addColorStop(0, "rgba(7,3,13,.2)"); v.addColorStop(1, "rgba(7,3,13,.45)");
+        ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+      }
+    };
+  })());
+
+  // ============================================================
+  //  EFFETS : inclinaison 3D + reflet, étincelles au clic, barre
+  //  de lecture, en-tête compact, compteurs animés.
+  // ============================================================
+  const Effets = (() => {
+    const calme = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const tactile = window.matchMedia && matchMedia("(hover: none)").matches;
+    let cible = null;
+    if (!calme && !tactile) {
+      document.addEventListener("pointermove", (ev) => {
+        const el = ev.target.closest && ev.target.closest("[data-tilt]");
+        if (cible && cible !== el) { cible.style.transform = ""; cible.classList.remove("incline"); cible = null; }
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const px = (ev.clientX - r.left) / r.width, py = (ev.clientY - r.top) / r.height;
+        const force = el.classList.contains("perso-portrait") ? 10 : el.classList.contains("perso") ? 14 : 6;
+        el.style.transform = `perspective(800px) rotateX(${(.5 - py) * force}deg) rotateY(${(px - .5) * force}deg) translateY(-3px)`;
+        el.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+        el.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+        el.classList.add("incline");
+        cible = el;
+      }, { passive: true });
+      document.addEventListener("pointerdown", (ev) => {
+        if (ev.button !== 0) return;
+        const couleur = getComputedStyle(document.documentElement).getPropertyValue("--or").trim() || "#f5c86b";
+        for (let k = 0; k < 10; k++) {
+          const e = document.createElement("span");
+          e.className = "etincelle";
+          const a = (k / 10) * Math.PI * 2 + Math.random() * .4, d = 24 + Math.random() * 26;
+          e.style.cssText = `left:${ev.clientX}px;top:${ev.clientY}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;background:${k % 3 ? couleur : "#fff"}`;
+          document.body.appendChild(e);
+          setTimeout(() => e.remove(), 700);
+        }
+      });
+    }
+    const barre = document.createElement("div");
+    barre.className = "barre-lecture"; barre.setAttribute("aria-hidden", "true");
+    document.body.appendChild(barre);
+    const majDefil = () => {
+      const h = document.documentElement.scrollHeight - innerHeight;
+      barre.style.transform = `scaleX(${h > 0 ? Math.min(1, scrollY / h) : 0})`;
+      document.body.classList.toggle("defile", scrollY > 40);
+    };
+    window.addEventListener("scroll", majDefil, { passive: true });
+
+    function compter(el) {
+      const fin = +el.dataset.compte;
+      if (calme || !fin) { el.textContent = fin; return; }
+      const debut = performance.now(), duree = 1200;
+      const pas = (t) => {
+        const q = Math.min(1, (t - debut) / duree);
+        el.textContent = Math.round(fin * (1 - Math.pow(1 - q, 3)));
+        if (q < 1) requestAnimationFrame(pas);
+      };
+      requestAnimationFrame(pas);
+    }
+    return {
+      apresRendu() {
+        cible = null;
+        const app = document.getElementById("app");
+        app.classList.remove("entree"); void app.offsetWidth; app.classList.add("entree");
+        app.querySelectorAll("[data-compte]").forEach(compter);
+        majDefil();
+      }
+    };
   })();
 
   // ---------- démarrage
