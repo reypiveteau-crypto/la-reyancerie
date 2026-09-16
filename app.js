@@ -61,7 +61,6 @@
     ? `<details class="signaler"><summary>Signaler</summary><div class="signaler-choix">${RAISONS.map((r) => `<button type="button" data-signaler="${type}" data-id="${esc(id)}" data-raison="${esc(r)}">${esc(r)}</button>`).join("")}</div></details>`
     : "";
 
-  let banniereOK = true;
   let themeCourant = "";
 
   // Image absente : on essaie les autres extensions, puis on retire l'image proprement.
@@ -74,9 +73,10 @@
     const suivante = EXT[EXT.indexOf(ext) + 1];
     if (EXT.includes(ext) && suivante) { img.setAttribute("src", src.slice(0, i) + suivante); return; }
     if (img.dataset.repli === "banniere") {
-      banniereOK = false;
-      document.getElementById("banniere-accueil").hidden = true;
-      const h = document.getElementById("hero-repli"); if (h) h.hidden = false;
+      // pas d'image : on garde la bannière dessinée
+      const ban = document.getElementById("banniere-accueil");
+      ban.classList.remove("avec-image");
+      img.remove();
       return;
     }
     if (img.dataset.repli === "vide") img.parentElement && img.parentElement.classList.add("icone-vide");
@@ -196,12 +196,7 @@
 
     return `
     <section class="accueil-tete">
-      <!-- La bannière pleine largeur est au-dessus de la page (index.html).
-           Ce texte ne s'affiche que si l'image est introuvable. -->
-      <div class="hero" id="hero-repli" ${banniereOK ? "hidden" : ""}>
-        <p class="surtitre">La plateforme de notre communauté</p>
-        <h1>Nos builds, nos événements,<br><em>notre histoire.</em></h1>
-      </div>
+      <h1 class="sr">${esc(CFG.NOM_SITE)}</h1>
       ${ME ? `<p class="bienvenue">Content de te revoir, <b>${esc(ME.username)}</b></p>` : `<button class="btn btn-discord" data-action="login">Se connecter avec Discord</button>`}
     </section>
 
@@ -878,7 +873,10 @@
     else delete document.documentElement.dataset.jeu;
     if (themeCourant === "genshin") DecorGenshin.allumer(); else DecorGenshin.eteindre();
     if (themeCourant === "hsr") DecorHSR.allumer(); else DecorHSR.eteindre();
-    document.getElementById("banniere-accueil").hidden = !(nom === "accueil" && banniereOK);
+    document.getElementById("banniere-accueil").hidden = nom !== "accueil";
+    // hors des espaces jeux : décor animé de la plateforme
+    if (!themeCourant) { document.documentElement.dataset.decor = "accueil"; DecorAccueil.allumer(); }
+    else { delete document.documentElement.dataset.decor; DecorAccueil.eteindre(); }
     document.title = CFG.NOM_SITE + (nom === "accueil" ? "" : " · " + (($app.querySelector("h1") || {}).textContent || ""));
     if (!rendre.memeEcran) window.scrollTo(0, 0);
     rendre.memeEcran = false;
@@ -1269,6 +1267,127 @@
   })();
 
   // ============================================================
+  //  DÉCOR ANIMÉ DE LA PLATEFORME — « Carrefour des mondes »
+  //  (accueil, mémoire, événements, communauté…)
+  //  Nuit violette, quatre halos aux couleurs des jeux qui dérivent,
+  //  réseau de points lumineux qui se relient entre eux (la
+  //  communauté), poussière d'or. Dessiné en code.
+  // ============================================================
+  const DecorAccueil = (() => {
+    let cv, ctx, W = 0, H = 0, dpr = 1, actif = false, raf = 0, dernier = 0;
+    let fond, points = [], poussiere = [];
+    const calme = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const HALOS = [["124,198,255", .18, .25], ["201,162,255", .82, .2], ["95,224,195", .15, .8], ["255,122,160", .85, .78]];
+
+    function peindre() {
+      fond = document.createElement("canvas"); fond.width = W * dpr; fond.height = H * dpr;
+      const g = fond.getContext("2d"); g.scale(dpr, dpr);
+      const ciel = g.createLinearGradient(0, 0, 0, H);
+      ciel.addColorStop(0, "#0d0822"); ciel.addColorStop(.55, "#170f33"); ciel.addColorStop(1, "#1f1236");
+      g.fillStyle = ciel; g.fillRect(0, 0, W, H);
+      // rayons de lumière venant du haut
+      g.save(); g.globalCompositeOperation = "lighter";
+      for (let k = 0; k < 6; k++) {
+        const x = W * (.15 + k * .15);
+        const r = g.createLinearGradient(x, 0, x + W * .08, H * .9);
+        r.addColorStop(0, "rgba(245,200,107,.07)"); r.addColorStop(1, "rgba(245,200,107,0)");
+        g.fillStyle = r; g.beginPath();
+        g.moveTo(x - 20, 0); g.lineTo(x + 30, 0); g.lineTo(x + W * .16, H); g.lineTo(x + W * .02, H); g.closePath(); g.fill();
+      }
+      g.restore();
+      for (let i = 0; i < W * H / 1400; i++) {
+        g.fillStyle = `rgba(255,245,225,${Math.random() * .45})`;
+        g.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+      }
+      const n = Math.min(90, Math.round(W * H / 16000));
+      points = Array.from({ length: n }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+        c: HALOS[Math.floor(Math.random() * 4)][0], r: 1 + Math.random() * 1.6
+      }));
+      poussiere = Array.from({ length: 40 }, () => ({ x: Math.random() * W, y: Math.random() * H, v: .1 + Math.random() * .3, p: Math.random() * 6.28 }));
+    }
+
+    function dessiner(t) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.drawImage(fond, 0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      HALOS.forEach(([c, x, y], i) => {
+        const cx = W * x + Math.sin(t * .00007 + i * 1.7) * W * .08;
+        const cy = H * y + Math.cos(t * .00009 + i) * H * .08;
+        const r = Math.max(W, H) * (.32 + .04 * Math.sin(t * .0003 + i));
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, `rgba(${c},.22)`); g.addColorStop(.5, `rgba(${c},.06)`); g.addColorStop(1, `rgba(${c},0)`);
+        ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      });
+      // réseau
+      const dmax = Math.min(170, W * .16);
+      for (const a of points) {
+        if (!calme) {
+          a.x += a.vx; a.y += a.vy;
+          if (a.x < 0 || a.x > W) a.vx *= -1;
+          if (a.y < 0 || a.y > H) a.vy *= -1;
+        }
+      }
+      ctx.lineWidth = .8;
+      for (let i = 0; i < points.length; i++) {
+        const a = points[i];
+        for (let j = i + 1; j < points.length; j++) {
+          const b = points[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
+          if (d < dmax) {
+            ctx.strokeStyle = `rgba(${a.c},${(1 - d / dmax) * .28})`;
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+          }
+        }
+      }
+      for (const a of points) {
+        const g = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.r * 5);
+        g.addColorStop(0, `rgba(${a.c},.9)`); g.addColorStop(1, `rgba(${a.c},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a.x, a.y, a.r * 5, 0, 7); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(a.x, a.y, a.r * .6, 0, 7); ctx.fill();
+      }
+      for (const d of poussiere) {
+        if (!calme) { d.y -= d.v; if (d.y < -5) { d.y = H + 5; d.x = Math.random() * W; } }
+        const al = .3 + .5 * (.5 + .5 * Math.sin(t * .002 + d.p));
+        ctx.fillStyle = `rgba(245,200,107,${al})`;
+        ctx.beginPath(); ctx.arc(d.x + Math.sin(t * .001 + d.p) * 6, d.y, 1.2, 0, 7); ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
+      const voile = ctx.createLinearGradient(0, 0, 0, H);
+      voile.addColorStop(0, "rgba(13,8,34,.15)"); voile.addColorStop(1, "rgba(13,8,34,.4)");
+      ctx.fillStyle = voile; ctx.fillRect(0, 0, W, H);
+    }
+    function boucle(t) {
+      if (!actif) return;
+      if (t - dernier > 33) { dessiner(t); dernier = t; }
+      raf = requestAnimationFrame(boucle);
+    }
+    function dimensionner() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      peindre(); dessiner(performance.now());
+    }
+    let attente;
+    function allumer() {
+      if (!cv) {
+        cv = document.createElement("canvas");
+        cv.id = "decor-accueil"; cv.setAttribute("aria-hidden", "true");
+        document.body.prepend(cv);
+        ctx = cv.getContext("2d");
+        window.addEventListener("resize", () => { if (!actif) return; clearTimeout(attente); attente = setTimeout(dimensionner, 150); });
+        document.addEventListener("visibilitychange", () => { if (actif && !document.hidden && !calme) { cancelAnimationFrame(raf); raf = requestAnimationFrame(boucle); } });
+      }
+      if (actif) return;
+      actif = true; cv.hidden = false;
+      dimensionner();
+      if (!calme) raf = requestAnimationFrame(boucle);
+    }
+    function eteindre() { actif = false; cancelAnimationFrame(raf); if (cv) cv.hidden = true; }
+    return { allumer, eteindre };
+  })();
+
+  // ============================================================
   //  DÉCOR ANIMÉ DE L'ESPACE HSR — « Voie de l'Express astral »
   //  Nébuleuses, champ d'étoiles en dérive (effet de voyage),
   //  planète à anneaux, rail de lumière dorée que parcourt un
@@ -1497,7 +1616,17 @@
       document.getElementById("lien-discord").innerHTML = `<a class="lien" href="${esc(CFG.INVITATION_DISCORD)}" target="_blank" rel="noopener">Rejoindre le serveur Discord ↗</a>`;
     }
     const ban = document.getElementById("banniere-accueil");
-    ban.innerHTML = `<img src="${esc(IMGS.banniere || CFG.BANNIERE || "banniere.png")}" alt="${esc(CFG.NOM_SITE)}" data-repli="banniere">`;
+    // Bannière dessinée ; si ton image banniere.png existe, elle passe devant.
+    ban.classList.add("avec-image");
+    ban.innerHTML = `
+      <div class="bd" aria-hidden="true">
+        <div class="bd-cadre">
+          <p class="bd-sur"><span>✦</span> Communauté <span>✦</span></p>
+          <p class="bd-titre">${esc(CFG.NOM_SITE).replace(/^(La|Le|Les) /, '<span class="bd-article">$1</span> ')}</p>
+          <p class="bd-jeux">${JEUX.map((g) => `<span style="--c:${g.couleur}"><i></i>${esc(g.nom)}</span>`).join("")}</p>
+        </div>
+      </div>
+      <img class="bd-image" src="${esc(IMGS.banniere || CFG.BANNIERE || "banniere.png")}" alt="${esc(CFG.NOM_SITE)}" data-repli="banniere">`;
     window.addEventListener("hashchange", rendre);
     rendre();
   }
