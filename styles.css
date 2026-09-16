@@ -573,19 +573,99 @@ img[data-zoom] { cursor: zoom-in; }
 .carte-identite .etoiles { font-size: 1rem; }
 
 /* ============================================================
-   1. GENSHIN — « Carnet de Teyvat »
-   Violet de nuit et or, cadres dorés comme un grimoire.
+   1. GENSHIN IMPACT — « Menu du Voyageur »
+   Ardoise de nuit, parchemin crème et or pâle comme les menus
+   du jeu ; cartes teintées selon la rareté (ambre 5★, lilas 4★)
+   avec bandeau de nom crème, titres gravés en capitales.
    ============================================================ */
-[data-jeu="genshin"] .jeu-tete {
-  padding: 28px 28px 26px; border-radius: 22px;
-  background:
-    radial-gradient(circle at 92% 20%, rgba(245, 200, 107, .18), transparent 40%),
-    linear-gradient(135deg, #2a1d4d, #1b1335);
-  border: 1px solid rgba(245, 200, 107, .35);
-  box-shadow: inset 0 0 0 6px #1b1335, inset 0 0 0 7px rgba(245, 200, 107, .25);
+[data-jeu="genshin"] {
+  --fond: #1a1e30; --fond-2: #212640; --surface: #2a2f4a; --surface-2: #373e5e; --trait: #4a5178;
+  --texte: #ece5d8; --faible: #b6ae9f; --or: #d3bc8e; --or-fonce: #1a1e30;
+  --rang5: #f0b35a; --rang4: #c69cf0;
+  --titre: "Cinzel", "Georgia", serif;
+  --rayon: 10px;
+  --entete-bg: rgba(26, 30, 48, .9); --sous-nav-bg: rgba(33, 38, 64, .95);
+  --creme: #ece5d8; --encre: #3b4255;
+  --corps-fond:
+    radial-gradient(1px 1px at 8% 12%, #fff 60%, transparent 61%) 0 0 / 380px 380px,
+    radial-gradient(1.3px 1.3px at 57% 33%, #f3e6c4 60%, transparent 61%) 0 0 / 460px 460px,
+    radial-gradient(1px 1px at 81% 71%, #fff 60%, transparent 61%) 0 0 / 300px 300px,
+    radial-gradient(1200px 520px at 50% 115%, rgba(211, 188, 142, .16), transparent 65%),
+    radial-gradient(900px 500px at 100% -10%, rgba(120, 140, 220, .18), transparent 70%),
+    linear-gradient(#141828, #1a1e30 40%, #1f2236);
 }
-[data-jeu="genshin"] .jeu-tete h1 { color: #fbe7b5; }
-[data-jeu="genshin"] .perso { box-shadow: inset 0 0 0 3px rgba(12, 8, 26, .6), inset 0 0 0 4px rgba(245, 200, 107, .25); }
+[data-jeu="genshin"] h1, [data-jeu="genshin"] h2 { font-weight: 700; letter-spacing: .03em; }
+
+/* En-tête : panneau de dialogue à double filet doré et losanges */
+[data-jeu="genshin"] .jeu-tete {
+  padding: 34px 32px 28px; border-radius: 4px; text-align: center; justify-items: center;
+  background: linear-gradient(180deg, rgba(59, 66, 85, .92), rgba(36, 41, 62, .95));
+  border: 1px solid rgba(211, 188, 142, .55);
+  box-shadow: inset 0 0 0 5px rgba(26, 30, 48, .9), inset 0 0 0 6px rgba(211, 188, 142, .3), 0 20px 50px -30px #000;
+}
+[data-jeu="genshin"] .jeu-tete::before, [data-jeu="genshin"] .jeu-tete::after {
+  content: "✦"; position: absolute; left: 50%; transform: translate(-50%, -50%);
+  color: var(--or); font-size: 1.1rem; background: #2c3250; padding: 0 12px; line-height: 1;
+}
+[data-jeu="genshin"] .jeu-tete::before { top: 0; }
+[data-jeu="genshin"] .jeu-tete::after { top: 100%; }
+[data-jeu="genshin"] .jeu-tete h1 { color: var(--or); font-size: clamp(2.2rem, 6vw, 3.8rem); text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+[data-jeu="genshin"] .jeu-tete .surtitre { color: var(--texte); letter-spacing: .5em; }
+[data-jeu="genshin"] .jeu-tete .surtitre::before, [data-jeu="genshin"] .jeu-tete .surtitre::after { content: " ── "; color: var(--or); letter-spacing: 0; }
+[data-jeu="genshin"] .jeu-tete .chapo { margin-inline: auto; }
+
+/* Cartes personnage : fond de rareté + bandeau crème, coin arrondi en bas à droite */
+[data-jeu="genshin"] .perso {
+  border-radius: 8px 8px 26px 8px; border: 0;
+  background: linear-gradient(160deg, #5e5789, #9c75b7);
+  box-shadow: 0 6px 16px -8px #000;
+}
+[data-jeu="genshin"] .perso[data-rar="5"] { background: linear-gradient(160deg, #8a5a33, #c98a43); }
+[data-jeu="genshin"] .perso:hover { transform: translateY(-4px); box-shadow: 0 0 0 2px var(--creme), 0 12px 24px -10px #000; }
+[data-jeu="genshin"] .perso-initiale { color: rgba(255, 255, 255, .8); font-family: var(--titre); }
+[data-jeu="genshin"] .perso-bas {
+  background: var(--creme); padding: 5px 6px 6px; gap: 0;
+}
+[data-jeu="genshin"] .perso-nom { color: var(--encre); font-size: .86rem; }
+[data-jeu="genshin"] .perso .etoiles { position: absolute; top: -18px; left: 0; right: 0; text-shadow: 0 1px 2px #000; font-size: .78rem; }
+[data-jeu="genshin"] .perso .etoiles.r5, [data-jeu="genshin"] .perso .etoiles { color: #ffd76b; }
+[data-jeu="genshin"] .perso-el { background: rgba(26, 30, 48, .55); }
+[data-jeu="genshin"] .perso-compte { background: var(--creme); color: var(--encre); }
+
+/* Commandes : pastilles sombres, bouton actif crème comme en jeu */
+[data-jeu="genshin"] .puce, [data-jeu="genshin"] .onglets-jeux a, [data-jeu="genshin"] .deroulant {
+  background: rgba(59, 66, 85, .85); border: 1px solid rgba(211, 188, 142, .25); color: var(--texte);
+}
+[data-jeu="genshin"] .puce.on, [data-jeu="genshin"] .onglets-jeux a.on {
+  background: var(--creme); color: var(--encre); border-color: var(--creme);
+}
+[data-jeu="genshin"] .btn { background: var(--creme); color: var(--encre); box-shadow: inset 0 0 0 2px #d8cdb8; }
+[data-jeu="genshin"] .btn::before {
+  content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--encre);
+  box-shadow: inset 0 0 0 3px var(--creme), inset 0 0 0 5px #f0b35a;
+}
+[data-jeu="genshin"] .btn-fantome { background: rgba(59, 66, 85, .85); color: var(--texte); box-shadow: inset 0 0 0 1px rgba(211, 188, 142, .35); }
+[data-jeu="genshin"] .btn-fantome::before { background: var(--or); box-shadow: none; width: 8px; height: 8px; }
+[data-jeu="genshin"] .filtres-roster input { background: rgba(59, 66, 85, .85); border-color: rgba(211, 188, 142, .3); }
+
+/* Section personnage */
+[data-jeu="genshin"] .perso-portrait {
+  border-radius: 10px 10px 40px 10px;
+  background: linear-gradient(160deg, #5e5789, #9c75b7);
+  box-shadow: 0 0 0 3px var(--creme), 0 0 0 8px rgba(26, 30, 48, .9), 0 0 0 9px rgba(211, 188, 142, .45), 0 30px 60px -30px var(--el);
+}
+[data-jeu="genshin"] .perso-portrait[data-rar="5"] { background: linear-gradient(160deg, #8a5a33, #c98a43); }
+[data-jeu="genshin"] .perso-id h1 { color: var(--creme); }
+[data-jeu="genshin"] .perso-id .surtitre { color: var(--or); }
+[data-jeu="genshin"] .panneau, [data-jeu="genshin"] .carte-identite, [data-jeu="genshin"] .carte {
+  background: rgba(42, 47, 74, .92); border-color: rgba(211, 188, 142, .22);
+}
+[data-jeu="genshin"] .panneau h3 { color: var(--or); font-family: var(--titre); }
+[data-jeu="genshin"] .conseil { background: var(--creme); color: var(--encre); border-left-color: var(--el); }
+[data-jeu="genshin"] .conseil b { color: #8a5a33; }
+[data-jeu="genshin"] .seq-item { background: rgba(236, 229, 216, .1); border: 1px solid rgba(211, 188, 142, .2); }
+[data-jeu="genshin"] .liste-icones .icone, [data-jeu="genshin"] .liste-sets .icone { background: linear-gradient(160deg, #8a5a33, #c98a43); border-radius: 6px 6px 14px 6px; }
+[data-jeu="genshin"] .sous-nav { border-radius: 4px; border-color: rgba(211, 188, 142, .35); }
 
 /* ============================================================
    2. HONKAI: STAR RAIL — « Billet de l'Express astral »
@@ -788,3 +868,10 @@ img[data-zoom] { cursor: zoom-in; }
   [data-jeu="nte"] .perso { box-shadow: 4px 4px 0 var(--el); border-width: 2px; }
 }
 @media (prefers-reduced-motion: reduce) { [data-jeu="wuwa"] .jeu-tete::after { animation: none; display: none; } }
+
+/* ---------- décor animé Genshin (dessiné par app.js) */
+#decor-genshin { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+[data-jeu="genshin"], [data-jeu="genshin"] body { background: #070a22; }
+[data-jeu="genshin"] body { background: transparent; }
+[data-jeu="genshin"] .entete { background: rgba(10, 12, 32, .72); }
+[data-jeu="genshin"] .filtres-roster, [data-jeu="genshin"] .roster-info { text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
