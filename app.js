@@ -1,393 +1,1045 @@
-/* ===== La Reyancerie — logique de l'application ===== */
+// ============================================================
+//  LA REYANCERIE — APPLICATION
+// ============================================================
+(function () {
+  const S = window.REY_STORE;
+  const JEUX = window.REY_JEUX;
+  const TYPES = window.REY_TYPES_EVENEMENT;
+  const CFG = window.REY_CONFIG;
+  const $app = document.getElementById("app");
+  let ME = null;
 
-const COULEURS = {
-  Pyro: "#ff6b47", Hydro: "#3db7e4", Anemo: "#4dd8b0", Electro: "#b57bd4",
-  Dendro: "#9bd13b", Cryo: "#7fdef0", Geo: "#e8b33c", Polyvalent: "#d9b96b"
-};
+  // ---------- utilitaires
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const jeu = (slug) => JEUX.find((g) => g.slug === slug);
+  const G = window.REY_GENSHIN;
+  const TYPES_POST = window.REY_TYPES_POST;
+  const IMGS = window.REY_IMAGES || {}; // images embarquées (aperçu uniquement)
+  const EXT = [".png", ".jpg", ".jpeg", ".webp"];
+  const slugNom = (nom) => String(nom).toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[«»]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  // Retrouve une fiche du roster par id ou par nom (« Kazuha » trouve « Kaedehara Kazuha »)
+  function persoDe(slugJeu, cle) {
+    const g = jeu(slugJeu);
+    if (!g || !g.roster || !cle) return null;
+    return g.roster.find((p) => p.id === cle || p.nom === cle)
+      || g.roster.find((p) => p.nom.endsWith(" " + cle)) || null;
+  }
+  function srcPortrait(p) {
+    if (IMGS[p.id]) return IMGS[p.id];
+    if (p.image) return p.image;
+    if (typeof AVEC_IMAGE === "undefined") return "";
+    const e = AVEC_IMAGE.find((x) => x === p.id || x.startsWith(p.id + "."));
+    return e ? (e.includes(".") ? e : e + ".png") : "";
+  }
+  const srcIcone = (dossier, nom) => IMGS[dossier + "/" + slugNom(nom)] || dossier + "/" + slugNom(nom) + ".png";
+  const couleurPerso = (g, p) => (G.couleurs[p.element] || g.couleur);
+  const iconeEl = (el, t) => `<svg viewBox="0 0 24 24" width="${t || 16}" height="${t || 16}" fill="currentColor" aria-hidden="true">${G.icones[el] || ""}</svg>`;
+  const etoiles = (n) => (n ? `<span class="etoiles r${n}">${"★".repeat(n)}</span>` : "");
+  const estSouvenir = (m) => !m.kind || m.kind === "souvenir";
+  const MAX_IMAGES_BUILD = 4;
+  const MAX_OCTETS = 5 * 1024 * 1024;
+  const TYPES_IMAGE = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+  const RAISONS = ["Contenu inapproprié", "Contenu choquant ou violent", "Hors sujet", "Spam ou publicité", "Image volée"];
+  const enAttente = (o) => o.statut === "en_attente";
+  const pastilleAttente = (o) => enAttente(o) ? `<span class="attente" title="Visible seulement par toi et l'équipe tant qu'un modérateur ne l'a pas validée">En attente de validation</span>` : "";
+  function verifierImages(fichiers, max) {
+    if (fichiers.length > max) throw new Error(max + " image" + (max > 1 ? "s" : "") + " maximum");
+    fichiers.forEach((f) => {
+      if (!TYPES_IMAGE.includes(f.type)) throw new Error("« " + f.name + " » n'est pas une image PNG, JPEG, WebP ou GIF");
+      if (f.size > MAX_OCTETS) throw new Error("« " + f.name + " » dépasse 5 Mo");
+    });
+  }
+  // Bouton « Signaler » : un premier clic ouvre le choix du motif
+  const boutonSignaler = (type, id, auteur) => ME && ME.id !== auteur
+    ? `<details class="signaler"><summary>Signaler</summary><div class="signaler-choix">${RAISONS.map((r) => `<button type="button" data-signaler="${type}" data-id="${esc(id)}" data-raison="${esc(r)}">${esc(r)}</button>`).join("")}</div></details>`
+    : "";
 
-const REGIONS = {
-  Mondstadt: "#6fc5a4", Liyue: "#e0a33c", Inazuma: "#a888d8", Sumeru: "#8fbf46",
-  Fontaine: "#4aa9d8", Natlan: "#e2724a", "Nod-Krai": "#7fa8d8",
-  Snezhnaya: "#9fd2e0", Autre: "#8a91b4"
-};
+  // Image absente : on essaie les autres extensions, puis on retire l'image proprement.
+  document.addEventListener("error", (ev) => {
+    const img = ev.target;
+    if (!(img instanceof HTMLImageElement) || !img.dataset.repli) return;
+    const src = img.getAttribute("src") || "";
+    const i = src.lastIndexOf(".");
+    const ext = i > -1 ? src.slice(i).toLowerCase() : "";
+    const suivante = EXT[EXT.indexOf(ext) + 1];
+    if (EXT.includes(ext) && suivante) { img.setAttribute("src", src.slice(0, i) + suivante); return; }
+    if (img.dataset.repli === "banniere") { const h = document.getElementById("hero-repli"); if (h) h.hidden = false; }
+    if (img.dataset.repli === "vide") img.parentElement && img.parentElement.classList.add("icone-vide");
+    img.remove();
+  }, true);
 
-/* Pictogrammes d'éléments — dessins originaux.
-   Ce ne sont PAS les emblèmes de Vision du jeu (propriété HoYoverse) :
-   ce sont les symboles naturels de chaque élément, redessinés pour ce site. */
-const ICONES = {
-  /* flamme avec un cœur évidé */
-  Pyro: '<path fill-rule="evenodd" d="M12 1.6c.6 2.9 2 4.5 3.5 6.1 1.9 2 3.6 4 3.6 7A7.1 7.1 0 0 1 4.9 14.7c0-2 .7-3.7 1.8-5.3.1 1.3.6 2.4 1.5 3.2C8 8.6 9.3 5 12 1.6Zm0 10.6c1.5 1.8 2.3 3 2.3 4.1a2.3 2.3 0 1 1-4.6 0c0-1.1.8-2.3 2.3-4.1Z"/>',
-  /* goutte avec un reflet évidé */
-  Hydro: '<path fill-rule="evenodd" d="M12 1.9c4.4 5.4 6.7 8.7 6.7 11.6a6.7 6.7 0 1 1-13.4 0C5.3 10.6 7.6 7.3 12 1.9ZM9.2 13.2a1 1 0 0 0-2 0 5 5 0 0 0 5 5 1 1 0 0 0 0-2 3 3 0 0 1-3-3Z"/>',
-  /* deux bourrasques de vent qui s'enroulent */
-  Anemo: '<path d="M2.5 6.6h9.8a2.3 2.3 0 1 0-2.2-2.9l-2-.4A4.3 4.3 0 1 1 12.3 8.6H2.5V6.6Z"/><path d="M2.5 11.4h13a2.7 2.7 0 1 1-2.6 3.4l-2 .5a4.8 4.8 0 1 0 4.6-6H2.5v2.1Z"/><path d="M2.5 16.3h7.2a2 2 0 1 1-1.9 2.6l-2 .5a4 4 0 1 0 3.9-5.1H2.5v2Z"/>',
-  /* éclair */
-  Electro: '<path d="M14.2 1.2 3.6 13.9h6.3l-1.4 9.3 10.9-12.9h-6.6l1.4-9.1Z"/>',
-  /* jeune pousse : deux feuilles et une tige */
-  Dendro: '<path d="M11.2 22.4v-6.2c-2.8.2-5-.6-6.5-2.4C3.2 11.9 2.6 9 2.8 5.2c3.8.3 6.6 1.4 8.2 3.4.4.5.7 1 1 1.6.3-.6.6-1.1 1-1.6 1.6-2 4.4-3.1 8.2-3.4.2 3.8-.4 6.7-1.9 8.6-1.5 1.8-3.7 2.6-6.5 2.4v6.2h-1.6Z"/>',
-  /* flocon à six branches : un bras dessiné une fois, répété par rotation
-     de 60° — symétrie parfaite garantie */
-  Cryo: '<g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V2.8M12 5.2 10.1 3.3M12 5.2 13.9 3.3M12 8.5 10.5 7M12 8.5 13.5 7"/><path transform="rotate(60 12 12)" d="M12 12V2.8M12 5.2 10.1 3.3M12 5.2 13.9 3.3M12 8.5 10.5 7M12 8.5 13.5 7"/><path transform="rotate(120 12 12)" d="M12 12V2.8M12 5.2 10.1 3.3M12 5.2 13.9 3.3M12 8.5 10.5 7M12 8.5 13.5 7"/><path transform="rotate(180 12 12)" d="M12 12V2.8M12 5.2 10.1 3.3M12 5.2 13.9 3.3M12 8.5 10.5 7M12 8.5 13.5 7"/><path transform="rotate(240 12 12)" d="M12 12V2.8M12 5.2 10.1 3.3M12 5.2 13.9 3.3M12 8.5 10.5 7M12 8.5 13.5 7"/><path transform="rotate(300 12 12)" d="M12 12V2.8M12 5.2 10.1 3.3M12 5.2 13.9 3.3M12 8.5 10.5 7M12 8.5 13.5 7"/></g><circle cx="12" cy="12" r="1.15"/>',
-  /* cristal taillé */
-  Geo: '<path fill-rule="evenodd" d="M7.3 1.8h9.4l4.6 6.5L12 22.6 2.7 8.3l4.6-6.5Zm1 2L6 7.4h3.2l1.1-3.6H8.3Zm4.1 0h-.8l-1.1 3.6h3L12.4 3.8Zm3.3 0h-1.2l1.1 3.6H18l-2.3-3.6ZM6.4 9.4l3.3 5.3-1.6-5.3H6.4Zm3.8 0 1.8 5.9 1.8-5.9h-3.6Zm5.6 0-1.6 5.3 3.3-5.3h-1.7Z"/>',
-  /* étoile, pour le Voyageur */
-  Polyvalent: '<path d="M12 1.4 14.8 9.2 22.6 12l-7.8 2.8L12 22.6 9.2 14.8 1.4 12l7.8-2.8L12 1.4Z"/>'
-};
+  const urlSure = (u) => (/^(https?:|data:image\/)/i.test(u || "") ? u : "");
+  const dateFr = (iso, heure) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const o = { day: "numeric", month: "long", year: "numeric" };
+    if (heure) Object.assign(o, { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("fr-FR", o);
+  };
+  const ilYa = (iso) => {
+    const s = (Date.now() - new Date(iso)) / 1000;
+    if (s < 60) return "à l'instant";
+    if (s < 3600) return "il y a " + Math.floor(s / 60) + " min";
+    if (s < 86400) return "il y a " + Math.floor(s / 3600) + " h";
+    const j = Math.floor(s / 86400);
+    return j === 1 ? "hier" : j < 30 ? "il y a " + j + " jours" : dateFr(iso);
+  };
+  const statut = (e) => {
+    const n = Date.now(), d = new Date(e.starts_at), f = e.ends_at ? new Date(e.ends_at) : new Date(+d + 3 * 3600000);
+    return n < d ? "avenir" : n > f ? "termine" : "encours";
+  };
+  const STATUT_LABEL = { avenir: "À venir", encours: "En cours", termine: "Terminé" };
 
-/* Pictogrammes d'armes */
-const ARMES = {
-  "Épée":       '<path d="M4 20h4l-1-1 9.5-9.5 3.2-6.9-6.9 3.2L3.3 15.3 2 14v4a2 2 0 0 0 2 2Zm12.6-13.3 1.7-.8-.8 1.7-8.8 8.8-.9-.9 8.8-8.8Z"/>',
-  "Claymore":   '<path d="M7 21h3v-3.6L20.4 7 21 2.6 16.6 3 6.2 13.4H3v3l2 2 2-2v4.6ZM17.7 5.3l1.1-.1-.1 1.1-9.3 9.3-1-1 9.3-9.3Z"/>',
-  "Lance":      '<path d="M12 2 8.5 9h2.2v9.5L9 20.2l1.4 1.4L12 20l1.6 1.6 1.4-1.4-1.7-1.7V9h2.2L12 2Zm0 4.3L13 8h-2l1-1.7Z"/>',
-  "Arc":        '<path d="M5 3a13 13 0 0 1 0 18l1.6 1.2A15 15 0 0 0 6.6 1.8L5 3Zm0 9h13.6l-2.3-2.3 1.4-1.4 4.7 4.7-4.7 4.7-1.4-1.4 2.3-2.3H5v-2Z"/>',
-  "Catalyseur": '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 0 16 8 8 0 0 1 0-16Zm0 3.2 1.5 3.3 3.3 1.5-3.3 1.5L12 16.8l-1.5-3.3L7.2 12l3.3-1.5L12 7.2Z"/>'
-};
-
-/* Champ facultatif `image` dans data.js :
-     image: "mavuika.png"
-   L'image s'affiche en fond de la carte et en haut de la fiche, assombrie pour que
-   le texte reste lisible. La crête d'élément reste visible par-dessus.
-   Sans ce champ — ou si le fichier est introuvable — la carte reste comme avant. */
-
-const app = document.getElementById("app");
-let fElement = null, fRegion = null, fRole = null, fBuild = false, recherche = "";
-
-const svgEl   = (el, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="currentColor" aria-hidden="true">${ICONES[el] || ""}</svg>`;
-const svgArme = (a, s = 15) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="currentColor" aria-hidden="true">${ARMES[a] || ""}</svg>`;
-const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-const avecBuild = PERSONNAGES.filter(p => p.build).length;
-
-/* Quelle image pour ce personnage ?
-   Priorité au champ `image` de sa fiche, sinon on regarde la liste AVEC_IMAGE.
-   Renvoie null si le personnage n'a pas d'image : la carte reste normale. */
-function imageDe(p) {
-  if (p.image) return p.image;
-  if (typeof AVEC_IMAGE === "undefined") return null;
-  const e = AVEC_IMAGE.find(x => x === p.id || x.startsWith(p.id + "."));
-  if (!e) return null;
-  return e.includes(".") ? e : e + ".png";
-}
-
-/* ---------- Lecture d'un set d'artefacts ----------
-   Transforme la chaîne écrite dans data.js en quelque chose d'affichable :
-     "Troupe dorée (4p)"                        → 4 pièces de Troupe dorée
-     "2p Ancien rituel royal + 2p Colère..."    → deux demi-sets combinés
-     "Briseur de glace (4p, équipes Freeze)"    → 4 pièces + une note de contexte
-   Si le format ne correspond à rien de connu, on affiche la chaîne telle quelle. */
-function lireSet(txt) {
-  let corps = txt, note = null, pieces = null;
-
-  const par = corps.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-  if (par) {
-    corps = par[1];
-    const dedans = par[2];
-    const pm = dedans.match(/^(\d)\s*p(?:ièces?)?\s*(?:,\s*(.*))?$/i);
-    if (pm) { pieces = +pm[1]; note = pm[2] || null; }
-    else { note = dedans; }
+  function toast(msg) {
+    const t = document.createElement("div");
+    t.className = "toast"; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
   }
 
-  // « 2p A + 2p B » : on ne coupe que sur un « + » entouré d'espaces,
-  // pour ne pas casser « Maîtrise élémentaire +80 »
-  const bouts = corps.split(/\s\+\s/);
-  const morceaux = [];
-  for (const b of bouts) {
-    const m = b.match(/^(\d)\s*p(?:ièces?)?\s+(.*)$/i);
-    if (m) morceaux.push({ n: +m[1], nom: m[2] });
-    else morceaux.push({ n: pieces, nom: b });
+  function avatar(p, taille) {
+    const cls = "avatar" + (taille ? " avatar-" + taille : "");
+    if (p && urlSure(p.avatar_url)) return `<img class="${cls}" src="${esc(p.avatar_url)}" alt="">`;
+    const nom = (p && p.username) || "?";
+    let h = 0; for (const c of nom) h = (h * 31 + c.charCodeAt(0)) % 360;
+    return `<span class="${cls}" style="--h:${h}" aria-hidden="true">${esc(nom[0].toUpperCase())}</span>`;
   }
-  return { morceaux, note, brut: txt };
-}
+  const pastilleJeu = (slug) => {
+    const g = jeu(slug);
+    return g ? `<span class="jeu-tag" style="--c:${g.couleur}">${esc(g.court)}</span>` : `<span class="jeu-tag jeu-tag-tous">Communauté</span>`;
+  };
+  const vide = (msg, action) => `<div class="vide"><p>${msg}</p>${action || ""}</div>`;
+  const doitSeConnecter = () => `<div class="vide"><p>Connecte-toi avec Discord pour faire ça.</p><button class="btn btn-discord" data-action="login">Se connecter avec Discord</button></div>`;
+  const estEquipe = () => ME && (ME.role === "admin" || ME.role === "modo");
 
-const RANGS = ["Meilleur choix", "Bonne alternative", "Correct aussi", "Dépannage"];
+  async function profilsParId() {
+    const m = {};
+    (await S.profiles()).forEach((p) => (m[p.id] = p));
+    return m;
+  }
 
-/* ---------- Icône d'un set d'artefacts ----------
-   L'image se range dans le dossier artefacts/, nommée d'après le nom du set :
-   minuscules, sans accent, tirets à la place des espaces et des apostrophes.
-     « Rêve doré »                  → artefacts/reve-dore.png
-     « Cœur de la fournaise »       → artefacts/coeur-de-la-fournaise.png
-     « Aubade d'astre et de lune »  → artefacts/aubade-d-astre-et-de-lune.png
-   Tant que l'image n'est pas déposée, un emplacement vide s'affiche à sa place.
-   Les lignes qui ne sont pas des sets (« 2p ATQ% », « Bonus DGT Hydro »…)
-   n'ont pas d'emplacement. */
-const PAS_UN_SET = /^(ATQ|PV|DEF|Bonus\b|Maîtrise élémentaire|Recharge|Taux CRIT|DGT CRIT)/i;
+  // ---------- cartes
+  function carteBuild(b, auteurs) {
+    const g = jeu(b.game), a = auteurs[b.author_id];
+    const champs = g ? g.champs.filter((c) => b.fields && b.fields[c.cle]).slice(0, 2) : [];
+    const img = urlSure((b.images || [])[0]);
+    const nb = (b.images || []).length;
+    return `<a class="carte carte-build" href="#/build/${esc(b.id)}" style="--c:${g ? g.couleur : "#fff"}">
+      <div class="build-visuel">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span>${esc(b.character)}</span>`}${nb > 1 ? `<span class="nb-images">${nb} images</span>` : ""}</div>
+      <div class="carte-haut">${pastilleJeu(b.game)}${pastilleAttente(b)}<span class="coeur ${b.liked ? "on" : ""}">♥ ${b.like_count}</span></div>
+      <div class="build-perso">${esc(b.character)}</div>
+      <div class="build-titre">${esc(b.title)}</div>
+      <dl class="mini-champs">${champs.map((c) => `<dt>${esc(c.label.split(" (")[0])}</dt><dd>${esc(b.fields[c.cle])}</dd>`).join("")}</dl>
+      <div class="carte-bas">${avatar(a, "s")}<span>${esc(a ? a.username : "Membre")}</span><span class="faible">· ${ilYa(b.created_at)}</span></div>
+    </a>`;
+  }
 
-const slugSet = (nom) => nom
-  .toLowerCase()
-  .replace(/œ/g, "oe").replace(/æ/g, "ae")
-  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-  .replace(/[«»]/g, "").replace(/[^a-z0-9]+/g, "-")
-  .replace(/^-+|-+$/g, "");
+  function carteSouvenir(m, auteurs) {
+    const g = jeu(m.game), a = auteurs[m.author_id];
+    const img = urlSure(m.image_url);
+    const perso = m.character ? persoDe(m.game, m.character) : null;
+    const typeLabel = estSouvenir(m) ? "" : (TYPES_POST[m.kind] || "Création");
+    return `<article class="carte souvenir" style="--c:${g ? g.couleur : "#f5c86b"}">
+      <div class="souvenir-visuel">${img ? `<img src="${esc(img)}" alt="${esc(m.title)}" loading="lazy" data-zoom>` : `<span class="souvenir-date">${esc(typeLabel || dateFr(m.happened_on))}</span>`}</div>
+      <div class="souvenir-corps">
+        <div class="carte-haut"><span class="tags">${pastilleJeu(m.game)}${typeLabel ? `<span class="type-tag">${esc(typeLabel)}</span>` : ""}${m.character ? (perso ? `<a class="perso-tag" href="#/jeu/${esc(m.game)}/${esc(perso.id)}">${esc(m.character)}</a>` : `<span class="perso-tag">${esc(m.character)}</span>`) : ""}</span><button class="coeur ${m.liked ? "on" : ""}" data-like="memory" data-id="${esc(m.id)}" aria-label="J'aime">♥ ${m.like_count}</button></div>
+        ${pastilleAttente(m)}
+        <h3>${esc(m.title)}</h3>
+        ${m.description ? `<p>${esc(m.description)}</p>` : ""}
+        ${urlSure(m.link_url) && !/^data:/.test(m.link_url) ? `<p><a class="lien" href="${esc(m.link_url)}" target="_blank" rel="noopener">Voir le clip / lien ↗</a></p>` : ""}
+        <div class="carte-bas">${avatar(a, "s")}<a href="#/membre/${esc(m.author_id)}">${esc(a ? a.username : "Membre")}</a><span class="faible">· ${esc(dateFr(m.happened_on))}</span>
+        ${ME && (ME.id === m.author_id || estEquipe()) ? `<button class="lien-discret" data-suppr-souvenir="${esc(m.id)}">Supprimer</button>` : ""}</div>
+        ${img ? boutonSignaler("memory", m.id, m.author_id) : ""}
+      </div>
+    </article>`;
+  }
 
-function iconeSet(nom) {
-  if (PAS_UN_SET.test(nom)) return "";
-  return `<span class="set-icone"><img class="icone-set" src="artefacts/${slugSet(nom)}.png" alt="" loading="lazy" width="44" height="44"></span>`;
-}
+  function carteEvenement(e) {
+    const t = TYPES[e.type] || { label: e.type, icone: "•" };
+    const st = statut(e);
+    return `<a class="carte evt evt-${st}" href="#/evenement/${esc(e.id)}">
+      <div class="evt-date"><span>${new Date(e.starts_at).toLocaleDateString("fr-FR", { day: "2-digit" })}</span><small>${new Date(e.starts_at).toLocaleDateString("fr-FR", { month: "short" })}</small></div>
+      <div class="evt-corps">
+        <div class="carte-haut"><span class="evt-type">${t.icone} ${esc(t.label)}</span><span class="statut statut-${st}">${STATUT_LABEL[st]}</span></div>
+        <h3>${esc(e.title)}</h3>
+        <div class="faible">${pastilleJeu(e.game)} · ${e.participant_count} participant${e.participant_count > 1 ? "s" : ""}${e.winners ? " · Gagnants : " + esc(e.winners) : ""}</div>
+      </div>
+    </a>`;
+  }
 
-/* ---------- Icône d'une arme ----------
-   Même principe que les sets, dans le dossier armes/ :
-     « Arc d'Amos »                   → armes/arc-d-amos.png
-     « Absolution (signature) »       → armes/absolution.png   (la parenthèse est ignorée)
-   Tant que l'image n'est pas déposée, un emplacement vide s'affiche. */
-function iconeArme(nom) {
-  const base = nom.replace(/\s*\([^)]*\)\s*$/, "");
-  return `<span class="set-icone arme-icone"><img class="icone-set" src="armes/${slugSet(base)}.png" alt="" loading="lazy" width="44" height="44"></span>`;
-}
+  // ---------- PAGES
+  const pages = {};
 
-function ligneSet(txt, i) {
-  const { morceaux, note } = lireSet(txt);
-  const corps = morceaux.map(m =>
-    `<span class="set-bloc">${iconeSet(m.nom)}${m.n ? `<span class="set-piece">${m.n}<small>p</small></span>` : ""}<span class="set-nom">${esc(m.nom)}</span></span>`
-  ).join('<span class="set-plus">+</span>');
-  return `
-    <li class="set ${i === 0 ? "set-top" : ""}">
-      <span class="set-rang">${RANGS[Math.min(i, RANGS.length - 1)]}</span>
-      <div class="set-corps">${corps}</div>
-      ${note ? `<span class="set-note">${esc(note)}</span>` : ""}
-    </li>`;
-}
+  pages.accueil = async () => {
+    const [builds, mems, evts, auteurs] = await Promise.all([S.builds(), S.memories(), S.events(), profilsParId()]);
+    const jour = Date.now() - 86400000;
+    const buildsJour = builds.filter((b) => +new Date(b.created_at) > jour).length;
+    const memsSemaine = mems.filter((m) => +new Date(m.created_at) > Date.now() - 7 * 86400000).length;
+    const actifs = evts.filter((e) => statut(e) !== "termine").sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const top = builds.slice().sort((a, b) => b.like_count - a.like_count)[0];
+    const mesJeux = ME && ME.games && ME.games.length ? ME.games : JEUX.map((g) => g.slug);
 
-/* ---------- Vue liste ---------- */
-function vueListe() {
-  const elements = Object.keys(COULEURS).filter(e => PERSONNAGES.some(p => p.element === e));
-  const regions  = Object.keys(REGIONS).filter(r => PERSONNAGES.some(p => p.region === r));
-  const roles    = ["DPS principal", "Sous-DPS", "Support", "Soigneur"];
+    return `
+    <section class="accueil-tete">
+      <img class="banniere" src="${esc(IMGS.banniere || CFG.BANNIERE || "banniere.png")}" alt="${esc(CFG.NOM_SITE)}" data-repli="banniere">
+      <!-- Texte de secours : affiché seulement si l'image de la bannière est introuvable -->
+      <div class="hero" id="hero-repli" hidden>
+        <p class="surtitre">La plateforme de notre communauté</p>
+        <h1>Nos builds, nos événements,<br><em>notre histoire.</em></h1>
+      </div>
+      ${ME ? `<p class="bienvenue">Content de te revoir, <b>${esc(ME.username)}</b></p>` : `<button class="btn btn-discord" data-action="login">Se connecter avec Discord</button>`}
+    </section>
 
-  const q = recherche.trim().toLowerCase();
-  const liste = PERSONNAGES.filter(p => {
-    if (fElement && p.element !== fElement) return false;
-    if (fRegion && p.region !== fRegion) return false;
-    if (fRole && !p.role.toLowerCase().includes(fRole.toLowerCase())) return false;
-    if (fBuild && !p.build) return false;
-    if (q) {
-      const blob = [p.nom, p.element, p.arme, p.role, p.region, p.bio,
-        ...(p.build ? [...p.build.armes, ...p.build.artefacts, ...p.build.equipes.flatMap(t => t.membres)] : [])
-      ].join(" ").toLowerCase();
-      if (!blob.includes(q)) return false;
+    <section class="pouls" aria-label="En ce moment">
+      ${actifs.slice(0, 2).map((e) => `<a class="pouls-item pouls-${statut(e)}" href="#/evenement/${esc(e.id)}"><b>${(TYPES[e.type] || {}).icone || ""} ${statut(e) === "encours" ? "En cours" : "Bientôt"}</b> ${esc(e.title)} <span class="faible">${statut(e) === "encours" ? "" : "· " + esc(dateFr(e.starts_at, true))}</span></a>`).join("")}
+      <div class="pouls-item"><b>${buildsJour}</b> nouveau${buildsJour > 1 ? "x" : ""} build${buildsJour > 1 ? "s" : ""} aujourd'hui</div>
+      <div class="pouls-item"><b>${memsSemaine}</b> souvenir${memsSemaine > 1 ? "s" : ""} cette semaine</div>
+      ${top ? `<a class="pouls-item" href="#/build/${esc(top.id)}"><b>♥ ${top.like_count}</b> Build le plus aimé : ${esc(top.character)}</a>` : ""}
+    </section>
+
+    <section class="bloc">
+      <div class="bloc-tete"><h2>${ME ? "Tes jeux" : "Les jeux"}</h2><a href="#/jeux" class="lien">Tous les jeux →</a></div>
+      <div class="grille grille-jeux">
+        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu" href="#/jeu/${g.slug}" style="--c:${g.couleur}"><span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
+      </div>
+    </section>
+
+    <section class="bloc">
+      <div class="bloc-tete"><h2>Derniers builds</h2><a href="#/nouveau-build" class="btn btn-petit">+ Publier un build</a></div>
+      <div class="grille">${builds.slice(0, 6).map((b) => carteBuild(b, auteurs)).join("") || vide("Aucun build pour l'instant.")}</div>
+    </section>
+
+    <section class="bloc">
+      <div class="bloc-tete"><h2>Souvenirs et créations récents</h2><a href="#/memoire" class="lien">Toute la mémoire →</a></div>
+      <div class="grille">${mems.slice(0, 3).map((m) => carteSouvenir(m, auteurs)).join("") || vide("Aucun souvenir pour l'instant.")}</div>
+    </section>`;
+  };
+
+  pages.memoire = async (_, q) => {
+    const filtre = q.get("jeu") || "";
+    const [mems, evts, auteurs] = await Promise.all([S.memories(filtre ? { game: filtre } : {}), S.events(filtre ? { game: filtre } : {}), profilsParId()]);
+    // Timeline : souvenirs + événements terminés, groupés par mois
+    const items = [
+      ...mems.filter(estSouvenir).map((m) => ({ date: m.happened_on, html: carteSouvenir(m, auteurs) })),
+      ...evts.filter((e) => statut(e) === "termine").map((e) => ({ date: (e.ends_at || e.starts_at).slice(0, 10), html: carteEvenement(e) }))
+    ].sort((a, b) => b.date.localeCompare(a.date));
+    const mois = {};
+    items.forEach((i) => { const k = i.date.slice(0, 7); (mois[k] = mois[k] || []).push(i); });
+
+    return `
+    <section class="page-tete">
+      <p class="surtitre">Mémoire</p>
+      <h1>Ce qu'on a vécu ensemble</h1>
+      <p class="chapo">Moments marquants et archives des événements, du plus récent au plus ancien. Les dessins et screenshots d'un personnage sont rangés dans sa section.</p>
+      <div class="actions"><a class="btn" href="#/nouveau-souvenir">+ Ajouter un souvenir</a></div>
+    </section>
+    ${filtresJeux("#/memoire", filtre)}
+    <div class="timeline">
+      ${Object.keys(mois).map((k) => `
+        <section class="mois">
+          <h2 class="mois-titre">${new Date(k + "-01T12:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</h2>
+          <div class="grille">${mois[k].map((i) => i.html).join("")}</div>
+        </section>`).join("") || vide("Rien dans la mémoire pour ce filtre.")}
+    </div>`;
+  };
+
+  function filtresJeux(base, actif) {
+    return `<nav class="filtres" aria-label="Filtrer par jeu">
+      <a href="${base}" class="${!actif ? "on" : ""}">Tout</a>
+      ${JEUX.map((g) => `<a href="${base}?jeu=${g.slug}" class="${actif === g.slug ? "on" : ""}" style="--c:${g.couleur}">${esc(g.court)}</a>`).join("")}
+    </nav>`;
+  }
+
+  pages.communaute = async () => {
+    const [profils, builds, mems] = await Promise.all([S.profiles(), S.builds(), S.memories()]);
+    return `
+    <section class="page-tete">
+      <p class="surtitre">Communauté</p>
+      <h1>${profils.length} membre${profils.length > 1 ? "s" : ""}</h1>
+      <p class="chapo">Chaque membre a son profil : ses jeux, ses builds, ses souvenirs et ses badges.</p>
+    </section>
+    <div class="grille grille-membres">
+      ${profils.map((p) => {
+        const nb = builds.filter((b) => b.author_id === p.id).length, ns = mems.filter((m) => m.author_id === p.id).length;
+        return `<a class="carte membre" href="#/membre/${esc(p.id)}">
+          ${avatar(p, "m")}
+          <div><div class="membre-nom">${esc(p.username)} ${p.role !== "membre" ? `<span class="role">${p.role === "admin" ? "Admin" : "Modo"}</span>` : ""}</div>
+          <div class="jeux-mini">${(p.games || []).map(pastilleJeu).join("")}</div>
+          <div class="faible">${nb} build${nb > 1 ? "s" : ""} · ${ns} souvenir${ns > 1 ? "s" : ""}</div></div>
+        </a>`;
+      }).join("")}
+    </div>`;
+  };
+
+  pages.membre = async ([id]) => {
+    const p = await S.profile(id);
+    if (!p) return vide("Ce membre n'existe pas.");
+    const [builds, mems, profils, nbPart, auteurs] = await Promise.all([S.builds({ author: id }), S.memories({ author: id }), S.profiles(), S.participationCount(id), profilsParId()]);
+    const rang = profils.slice().sort((a, b) => a.created_at.localeCompare(b.created_at)).findIndex((x) => x.id === id) + 1;
+    const stats = { rang, builds: builds.length, souvenirs: mems.length, participations: nbPart, jeux: (p.games || []).length, role: p.role };
+    const badges = window.REY_BADGES.filter((b) => b.test(stats));
+    const activite = [
+      ...builds.map((b) => ({ d: b.created_at, t: `Build de <a href="#/build/${esc(b.id)}">${esc(b.character)}</a>`, g: b.game })),
+      ...mems.map((m) => ({ d: m.created_at, t: `Souvenir : ${esc(m.title)}`, g: m.game }))
+    ].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 6);
+    const moi = ME && ME.id === id;
+
+    return `
+    <section class="profil-tete">
+      ${avatar(p, "l")}
+      <div>
+        <p class="surtitre">Membre depuis ${new Date(p.created_at).getFullYear()}${p.role !== "membre" ? " · " + (p.role === "admin" ? "Admin" : "Modérateur") : ""}</p>
+        <h1>${esc(p.username)}</h1>
+        ${p.bio ? `<p class="chapo">${esc(p.bio)}</p>` : ""}
+        <div class="jeux-mini">${(p.games || []).map(pastilleJeu).join("") || '<span class="faible">Aucun jeu suivi</span>'}</div>
+        ${moi ? `<div class="actions"><a class="btn btn-petit" href="#/moi">Modifier mon profil</a></div>` : ""}
+      </div>
+    </section>
+    <section class="compteurs">
+      <div><b>${builds.length}</b><span>builds</span></div>
+      <div><b>${mems.length}</b><span>souvenirs</span></div>
+      <div><b>${nbPart}</b><span>événements</span></div>
+      <div><b>#${rang}</b><span>arrivée</span></div>
+    </section>
+    <section class="bloc">
+      <h2>Badges</h2>
+      <div class="badges">${badges.map((b) => `<span class="badge" title="${esc(b.desc)}">${esc(b.label)}<small>${esc(b.desc)}</small></span>`).join("") || '<p class="faible">Pas encore de badge.</p>'}</div>
+    </section>
+    <section class="bloc">
+      <h2>Dernière activité</h2>
+      <ul class="activite">${activite.map((a) => `<li>${pastilleJeu(a.g)} ${a.t} <span class="faible">· ${ilYa(a.d)}</span></li>`).join("") || '<li class="faible">Rien pour l\'instant.</li>'}</ul>
+    </section>
+    <section class="bloc"><h2>Bibliothèque de builds</h2><div class="grille">${builds.map((b) => carteBuild(b, auteurs)).join("") || '<p class="faible">Aucun build publié.</p>'}</div></section>
+    <section class="bloc"><h2>Souvenirs et créations</h2><div class="grille">${mems.map((m) => carteSouvenir(m, auteurs)).join("") || '<p class="faible">Aucun souvenir partagé.</p>'}</div></section>`;
+  };
+
+  pages.jeux = async () => {
+    const [builds, mems, profils] = await Promise.all([S.builds(), S.memories(), S.profiles()]);
+    return `
+    <section class="page-tete"><p class="surtitre">Jeux</p><h1>${JEUX.length} jeux, une communauté</h1></section>
+    <div class="grille grille-jeux-grands">
+      ${JEUX.map((g) => {
+        const nb = builds.filter((b) => b.game === g.slug).length, ns = mems.filter((m) => m.game === g.slug).length, nj = profils.filter((p) => (p.games || []).includes(g.slug)).length;
+        return `<a class="tuile-jeu tuile-grande" href="#/jeu/${g.slug}" style="--c:${g.couleur}">
+          <span class="tuile-nom">${esc(g.nom)}</span>
+          <span class="tuile-stats"><span><b>${nj}</b> joueurs</span><span><b>${nb}</b> builds</span><span><b>${ns}</b> souvenirs</span></span>
+        </a>`;
+      }).join("")}
+    </div>`;
+  };
+
+  pages.jeu = async ([slug, idPerso], q) => {
+    const g = jeu(slug);
+    if (!g) return vide("Ce jeu n'est pas (encore) sur la plateforme.");
+    if (g.roster && idPerso) return pagePerso(g, idPerso);
+    if (g.roster) return pageRoster(g);
+    const perso = q.get("perso") || "";
+    const [builds, mems, evts, profils, auteurs] = await Promise.all([S.builds({ game: slug }), S.memories({ game: slug }), S.events({ game: slug }), S.profiles(), profilsParId()]);
+    const joueurs = profils.filter((p) => (p.games || []).includes(slug));
+    const parPerso = {};
+    builds.forEach((b) => (parPerso[b.character] = (parPerso[b.character] || 0) + 1));
+    const liste = perso ? builds.filter((b) => b.character === perso) : builds;
+
+    return `
+    <section class="page-tete jeu-tete" style="--c:${g.couleur}">
+      <p class="surtitre">Jeu</p>
+      <h1>${esc(g.nom)}</h1>
+      <p class="chapo">${joueurs.length} membre${joueurs.length > 1 ? "s" : ""} y joue${joueurs.length > 1 ? "nt" : ""} · ${builds.length} build${builds.length > 1 ? "s" : ""} communautaire${builds.length > 1 ? "s" : ""}</p>
+      <div class="actions"><a class="btn" href="#/nouveau-build?jeu=${g.slug}">+ Publier un build ${esc(g.court)}</a></div>
+    </section>
+
+    <section class="bloc">
+      <h2>${esc(g.motEntite)}s partagés par la communauté</h2>
+      <nav class="filtres">
+        <a href="#/jeu/${g.slug}" class="${!perso ? "on" : ""}" style="--c:${g.couleur}">Tous</a>
+        ${Object.keys(parPerso).sort().map((n) => `<a href="#/jeu/${g.slug}?perso=${encodeURIComponent(n)}" class="${perso === n ? "on" : ""}" style="--c:${g.couleur}">${esc(n)} <small>${parPerso[n]}</small></a>`).join("")}
+      </nav>
+      ${perso ? `<p class="chapo">${parPerso[perso] || 0} membre${(parPerso[perso] || 0) > 1 ? "s ont" : " a"} publié son build de ${esc(perso)}.</p>` : ""}
+      <div class="grille">${liste.map((b) => carteBuild(b, auteurs)).join("") || vide("Aucun build pour l'instant. Sois le premier.", `<a class="btn" href="#/nouveau-build?jeu=${g.slug}">Publier un build</a>`)}</div>
+    </section>
+
+    <section class="bloc">
+      <h2>Qui joue à ${esc(g.court)} ?</h2>
+      <div class="joueurs">${joueurs.map((p) => `<a href="#/membre/${esc(p.id)}" class="joueur">${avatar(p, "s")}${esc(p.username)}</a>`).join("") || '<p class="faible">Personne pour l\'instant.</p>'}</div>
+    </section>
+
+    <section class="bloc"><h2>Événements ${esc(g.court)}</h2><div class="liste-evt">${evts.map(carteEvenement).join("") || '<p class="faible">Aucun événement.</p>'}</div></section>
+    <section class="bloc"><h2>Souvenirs ${esc(g.court)}</h2><div class="grille">${mems.map((m) => carteSouvenir(m, auteurs)).join("") || '<p class="faible">Aucun souvenir.</p>'}</div></section>`;
+  };
+
+  // ======== JEU AVEC ROSTER (Genshin) : grille de tous les personnages
+  const filtresRoster = { q: "", el: "", arme: "", rar: "" };
+  let rosterOuvert = false;
+  const RANGEES_VISIBLES = 2; // rangées affichées avant « Plus de personnages »
+
+  async function pageRoster(g) {
+    const [builds, mems, evts, profils, auteurs] = await Promise.all([S.builds({ game: g.slug }), S.memories({ game: g.slug }), S.events({ game: g.slug }), S.profiles(), profilsParId()]);
+    const compte = {};
+    const ajoute = (nom) => { const p = persoDe(g.slug, nom); if (p) compte[p.id] = (compte[p.id] || 0) + 1; };
+    builds.forEach((b) => ajoute(b.character));
+    mems.forEach((m) => m.character && ajoute(m.character));
+    const roster = g.roster.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+    const elements = Object.keys(G.couleurs).filter((e) => roster.some((p) => p.element === e));
+    const joueurs = profils.filter((p) => (p.games || []).includes(g.slug));
+    const creations = mems.filter((m) => !estSouvenir(m));
+    const puce = (groupe, val, html, couleur) => `<button type="button" class="puce ${filtresRoster[groupe] === val ? "on" : ""}" data-filtre="${groupe}" data-val="${esc(val)}"${couleur ? ` style="--c:${couleur}"` : ""}>${html}</button>`;
+
+    return {
+      html: `
+      <section class="page-tete jeu-tete" style="--c:${g.couleur}">
+        <p class="surtitre">Jeu</p>
+        <h1>${esc(g.nom)}</h1>
+        <p class="chapo">${roster.length} personnages · ${builds.length} build${builds.length > 1 ? "s" : ""} et ${creations.length} création${creations.length > 1 ? "s" : ""} partagés par ${joueurs.length} membre${joueurs.length > 1 ? "s" : ""}. Clique sur un personnage pour voir son guide et tout ce que la communauté a publié sur lui.</p>
+      </section>
+
+      <section class="bloc">
+        <div class="filtres-roster">
+          <label class="sr" for="f-roster-q">Chercher un personnage</label>
+          <input type="search" id="f-roster-q" placeholder="Chercher un personnage…" value="${esc(filtresRoster.q)}" autocomplete="off">
+          <div class="puces">${elements.map((e) => puce("el", e, iconeEl(e) + `<span>${esc(e)}</span>`, G.couleurs[e])).join("")}</div>
+          <div class="puces">${G.armes.map((a) => puce("arme", a, esc(a))).join("")}${puce("rar", "5", "5★", "#f5c86b")}${puce("rar", "4", "4★", "#c9a2ff")}</div>
+          <p class="faible roster-info"><span id="roster-compte"></span> <button type="button" class="lien-discret" data-filtre="reset">Effacer les filtres</button></p>
+        </div>
+        <div class="grille-persos" id="grille-persos">
+          ${roster.map((p) => cartePerso(g, p, compte[p.id] || 0)).join("")}
+        </div>
+        <p class="vide" id="roster-vide" hidden>Aucun personnage ne correspond à ces filtres.</p>
+        <button type="button" class="deroulant" id="roster-plus" data-roster-plus aria-expanded="false" aria-controls="grille-persos" hidden>
+          <span class="deroulant-texte">Plus de personnages</span> <span class="deroulant-nb"></span> <span class="chevron" aria-hidden="true">▾</span>
+        </button>
+      </section>
+
+      <section class="bloc">
+        <div class="bloc-tete"><h2>Derniers builds de la communauté</h2><a class="btn btn-petit" href="#/nouveau-build?jeu=${g.slug}">+ Publier un build</a></div>
+        <div class="grille">${builds.slice(0, 6).map((b) => carteBuild(b, auteurs)).join("") || vide("Aucun build pour l'instant.")}</div>
+      </section>
+      <section class="bloc">
+        <div class="bloc-tete"><h2>Dernières créations</h2><a class="btn btn-petit btn-fantome" href="#/nouveau-souvenir?type=dessin&jeu=${g.slug}">+ Partager une création</a></div>
+        <div class="grille">${creations.slice(0, 6).map((m) => carteSouvenir(m, auteurs)).join("") || vide("Aucune création pour l'instant.")}</div>
+      </section>
+      <section class="bloc">
+        <h2>Qui joue à ${esc(g.court)} ?</h2>
+        <div class="joueurs">${joueurs.map((p) => `<a href="#/membre/${esc(p.id)}" class="joueur">${avatar(p, "s")}${esc(p.username)}</a>`).join("") || '<p class="faible">Personne pour l\'instant.</p>'}</div>
+      </section>
+      <section class="bloc"><h2>Événements ${esc(g.court)}</h2><div class="liste-evt">${evts.map(carteEvenement).join("") || '<p class="faible">Aucun événement.</p>'}</div></section>`,
+      apres: appliquerFiltresRoster
+    };
+  }
+
+  function cartePerso(g, p, n) {
+    const src = srcPortrait(p);
+    return `<a class="perso" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
+      <span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>
+      ${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-repli="cacher">` : ""}
+      <span class="perso-el" title="${esc(p.element)}">${iconeEl(p.element, 15)}</span>
+      ${n ? `<span class="perso-compte" title="${n} publication${n > 1 ? "s" : ""} de la communauté">${n}</span>` : ""}
+      <span class="perso-bas"><span class="perso-nom">${esc(p.nom)}</span>${etoiles(p.rarete)}</span>
+    </a>`;
+  }
+
+  function appliquerFiltresRoster() {
+    const grille = document.getElementById("grille-persos");
+    if (!grille) return;
+    const f = filtresRoster, q = slugNom(f.q);
+    const filtre = !!(f.el || f.arme || f.rar || q);
+    const cartes = [...grille.querySelectorAll(".perso")];
+    const ok = cartes.filter((c) => (!f.el || c.dataset.el === f.el) && (!f.arme || c.dataset.arme === f.arme) && (!f.rar || c.dataset.rar === f.rar) && (!q || c.dataset.nom.includes(q)));
+    const n = ok.length;
+    // Sans filtre : seules les premières rangées sont visibles, le reste est dans le menu déroulant.
+    const colonnes = getComputedStyle(grille).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
+    const limite = filtre || rosterOuvert ? Infinity : colonnes * RANGEES_VISIBLES;
+    cartes.forEach((c) => (c.hidden = true));
+    ok.forEach((c, i) => (c.hidden = i >= limite));
+    const plus = document.getElementById("roster-plus");
+    plus.hidden = filtre || n <= colonnes * RANGEES_VISIBLES;
+    plus.setAttribute("aria-expanded", String(rosterOuvert));
+    plus.querySelector(".deroulant-texte").textContent = rosterOuvert ? "Moins de personnages" : "Plus de personnages";
+    plus.querySelector(".deroulant-nb").textContent = rosterOuvert ? "" : "(" + (n - colonnes * RANGEES_VISIBLES) + ")";
+    document.getElementById("roster-compte").textContent = n + " personnage" + (n > 1 ? "s" : "");
+    document.getElementById("roster-vide").hidden = n > 0;
+    document.querySelectorAll("[data-filtre][data-val]").forEach((b) => b.classList.toggle("on", f[b.dataset.filtre] === b.dataset.val));
+  }
+
+  // ======== SECTION D'UN PERSONNAGE
+  const RANGS = ["Meilleur choix", "Bonne alternative", "Correct aussi", "Dépannage"];
+  const PAS_UN_SET = /^(ATQ|PV|DEF|Bonus\b|Maîtrise élémentaire|Recharge|Taux CRIT|DGT CRIT)/i;
+
+  function lireSet(txt) {
+    let corps = txt, note = null, pieces = null;
+    const par = corps.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+    if (par) {
+      corps = par[1];
+      const pm = par[2].match(/^(\d)\s*p(?:ièces?)?\s*(?:,\s*(.*))?$/i);
+      if (pm) { pieces = +pm[1]; note = pm[2] || null; } else note = par[2];
     }
-    return true;
-  });
+    const morceaux = corps.split(/\s\+\s/).map((b) => {
+      const m = b.match(/^(\d)\s*p(?:ièces?)?\s+(.*)$/i);
+      return m ? { n: +m[1], nom: m[2] } : { n: pieces, nom: b };
+    });
+    return { morceaux, note };
+  }
+  const icone = (dossier, nom) => `<span class="icone"><img src="${esc(srcIcone(dossier, nom))}" alt="" loading="lazy" width="40" height="40" data-repli="vide"></span>`;
 
-  const actif = fElement || fRegion || fRole || fBuild || recherche;
+  function guideDe(g, p) {
+    const b = p.build;
+    if (!b) {
+      return `<div class="vide"><p><b>${p.note ? "Pourquoi pas de build ici" : "Build de référence en préparation"}</b></p><p>${esc(p.note || "Ce build n'a pas encore été vérifié : rien n'est affiché plutôt que quelque chose de faux. En attendant, regarde les builds des membres juste en dessous.")}</p></div>`;
+    }
+    const seq = (arr) => (arr || []).map((x, i) => `${i ? '<span class="seq-fleche">›</span>' : ""}<span class="seq-item">${esc(x)}</span>`).join("");
+    const ligneSet = (txt, i) => {
+      const { morceaux, note } = lireSet(txt);
+      return `<li class="${i === 0 ? "meilleur" : ""}"><span class="rang">${RANGS[Math.min(i, 3)]}</span>
+        <span class="set-ligne">${morceaux.map((m) => `<span class="set-bloc">${PAS_UN_SET.test(m.nom) ? "" : icone("artefacts", m.nom)}${m.n ? `<b class="pieces">${m.n}p</b>` : ""}<span>${esc(m.nom)}</span></span>`).join('<span class="seq-fleche">+</span>')}</span>
+        ${note ? `<small class="faible">${esc(note)}</small>` : ""}</li>`;
+    };
+    const equipier = (nom) => {
+      const q = persoDe(g.slug, nom);
+      const src = q ? srcPortrait(q) : "";
+      const contenu = `<span class="equipier-img" style="--el:${q ? couleurPerso(g, q) : g.couleur}"><span aria-hidden="true">${esc(nom[0])}</span>${src ? `<img src="${esc(src)}" alt="" loading="lazy" data-repli="cacher">` : ""}</span><span>${esc(nom)}</span>`;
+      if (q && q.id === p.id) return `<span class="equipier soi">${contenu}</span>`;
+      return q ? `<a class="equipier" href="#/jeu/${g.slug}/${esc(q.id)}">${contenu}</a>` : `<span class="equipier">${contenu}</span>`;
+    };
+    return `
+      ${b.conseil ? `<aside class="conseil"><b>À retenir</b><p>${esc(b.conseil)}</p></aside>` : ""}
+      <div class="panneaux">
+        <section class="panneau"><h3>Armes recommandées</h3>
+          <ol class="liste-icones">${(b.armes || []).map((a, i) => `<li class="${i === 0 ? "meilleur" : ""}">${icone("armes", a.replace(/\s*\([^)]*\)\s*$/, ""))}<span>${esc(a)}</span></li>`).join("")}</ol>
+        </section>
+        <section class="panneau"><h3>Sets d'artefacts</h3>
+          <ol class="liste-sets">${(b.artefacts || []).map(ligneSet).join("")}</ol>
+        </section>
+        <section class="panneau"><h3>Stats principales</h3>
+          <dl class="stats-principales">${b.stats ? ["sablier", "coupe", "couronne"].map((k) => `<div><dt>${k[0].toUpperCase() + k.slice(1)}</dt><dd>${esc(b.stats[k] || "—")}</dd></div>`).join("") : ""}</dl>
+          <h4>Substats, par priorité</h4><div class="seq">${seq(b.substats)}</div>
+          <h4>Montée des talents</h4><div class="seq">${seq(b.talents)}</div>
+        </section>
+        <section class="panneau panneau-large"><h3>Équipes recommandées</h3>
+          <div class="equipes">${(b.equipes || []).map((t) => `<div class="equipe"><div class="equipe-nom">${esc(t.nom)}</div><div class="equipiers">${t.membres.map(equipier).join("")}</div></div>`).join("")}</div>
+        </section>
+      </div>`;
+  }
 
-  app.innerHTML = `
-    <section class="hero">
-      <p class="eyebrow">Version ${VERSION_JEU} · ${MAJ}</p>
-      <h1>Guide des builds<br><em>des personnages Genshin</em></h1>
-      <div class="accroche">
-        <p class="accroche-q">«&#8239;Je viens de le drop.<br>Je lui mets quoi&#8239;?&#8239;»</p>
-        <span class="accroche-trait" aria-hidden="true"></span>
-        <p class="accroche-r"><b>Armes, artefacts, stats et équipes.</b></p>
-      </div>
-      <div class="hero-stats">
-        <span class="pill"><b>${PERSONNAGES.length}</b> fiches</span>
-        <span class="pill"><b>${avecBuild}</b> builds détaillés</span>
-        <span class="pill"><b>${regions.length}</b> régions</span>
-      </div>
-    </section>
+  async function pagePerso(g, id) {
+    const p = persoDe(g.slug, id);
+    if (!p) return vide("Ce personnage n'existe pas.", `<a class="btn" href="#/jeu/${g.slug}">Tous les personnages</a>`);
+    const [builds, mems, auteurs] = await Promise.all([S.builds({ game: g.slug, character: p.nom }), S.memories({ game: g.slug, character: p.nom }), profilsParId()]);
+    const creations = mems.filter((m) => !estSouvenir(m));
+    const souvenirs = mems.filter(estSouvenir);
+    const idsMembres = [...new Set([...builds.map((b) => b.author_id), ...mems.map((m) => m.author_id)])];
+    const src = srcPortrait(p);
+    const nomUrl = encodeURIComponent(p.nom);
+    const ancre = (cible, label, n) => `<button type="button" class="ancre" data-ancre="${cible}">${label}${n != null ? ` <small>${n}</small>` : ""}</button>`;
 
-    <section class="toolbar">
-      <input class="search" id="q" type="search" placeholder="Chercher un personnage, une arme, un set, une équipe…" value="${esc(recherche)}">
-      <div class="filter-row">
-        <span class="filter-label">Élément</span>
-        ${elements.map(e => `<button class="chip chip-el" data-el="${e}" aria-pressed="${fElement === e}" style="--c:${COULEURS[e]}">
-            <span class="chip-ico">${svgEl(e, 14)}</span>${e}</button>`).join("")}
-      </div>
-      <div class="filter-row">
-        <span class="filter-label">Région</span>
-        ${regions.map(r => `<button class="chip chip-el" data-region="${r}" aria-pressed="${fRegion === r}" style="--c:${REGIONS[r]}">
-            <span class="dot"></span>${r}</button>`).join("")}
-      </div>
-      <div class="filter-row">
-        <span class="filter-label">Rôle</span>
-        ${roles.map(r => `<button class="chip" data-role="${r}" aria-pressed="${fRole === r}">${r}</button>`).join("")}
-        <button class="chip chip-build" data-build="1" aria-pressed="${fBuild}">Avec build détaillé</button>
-        ${actif ? `<button class="chip chip-reset" id="reset">Réinitialiser</button>` : ""}
-      </div>
-      <p class="count">${liste.length} personnage${liste.length > 1 ? "s" : ""}</p>
-    </section>
-
-    <section class="grid">
-      ${liste.length ? liste.map(carte).join("") : `<p class="empty">Aucun personnage ne correspond. Essaie un autre filtre.</p>`}
-    </section>
-  `;
-
-  const inp = document.getElementById("q");
-  inp.addEventListener("input", e => {
-    recherche = e.target.value;
-    const pos = e.target.selectionStart;
-    vueListe();
-    const n = document.getElementById("q");
-    n.focus(); n.setSelectionRange(pos, pos);
-  });
-
-  const bind = (sel, fn) => app.querySelectorAll(sel).forEach(b => b.onclick = () => { fn(b); vueListe(); });
-  bind("[data-el]",     b => fElement = fElement === b.dataset.el ? null : b.dataset.el);
-  bind("[data-region]", b => fRegion  = fRegion  === b.dataset.region ? null : b.dataset.region);
-  bind("[data-role]",   b => fRole    = fRole    === b.dataset.role ? null : b.dataset.role);
-  bind("[data-build]",  () => fBuild = !fBuild);
-  const r = document.getElementById("reset");
-  if (r) r.onclick = () => { fElement = fRegion = fRole = null; fBuild = false; recherche = ""; vueListe(); };
-
-  app.querySelectorAll(".card").forEach(c => c.onclick = () => { location.hash = "#/" + c.dataset.id; });
-  brancherImages();
-}
-
-function carte(p) {
-  const img = imageDe(p);
-  return `
-    <button class="card ${p.rarete === 5 ? "is-5" : ""}${img ? " avec-fond" : ""}" data-id="${p.id}"
-            style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
-      ${img ? `<img class="fond" src="${esc(img)}" alt="" loading="lazy" decoding="async">` : ""}
-      <span class="card-rail"></span>
-      <div class="card-top">
-        <span class="el-badge">${svgEl(p.element)}</span>
-        <span class="card-flags">
-          ${p.tier ? `<span class="tier">${p.tier}</span>` : ""}
-          ${p.build ? `<span class="has-build" title="Build détaillé disponible">●</span>` : ""}
-        </span>
-      </div>
-      <h3>${esc(p.nom)}</h3>
-      <div class="card-meta">
-        <span class="stars${p.rarete === 5 ? " s5" : ""}">${p.rarete ? "★".repeat(p.rarete) : "—"}</span>
-        <span class="wpn">${svgArme(p.arme)}${esc(p.arme)}</span>
-      </div>
-      <div class="card-foot">
-        <span class="card-region">${esc(p.region)}</span>
-        <span class="card-role">${esc(p.role)}</span>
-      </div>
-    </button>`;
-}
-
-/* ---------- Vue fiche ---------- */
-function vueFiche(p) {
-  const b = p.build, img = imageDe(p);
-  app.innerHTML = `
-    <article class="detail${img ? " avec-fond" : ""}" style="--el:${COULEURS[p.element]};--rg:${REGIONS[p.region] || "#8a91b4"}">
-      ${img ? `<img class="fond" src="${esc(img)}" alt="Portrait de ${esc(p.nom)}" decoding="async">` : ""}
-      <button class="back" id="back">← Tous les personnages</button>
-
-      <header class="detail-head">
-        <span class="el-badge big">${svgEl(p.element, 30)}</span>
-        <div class="detail-id">
-          <p class="detail-region">${esc(p.region)}</p>
-          <h2>${esc(p.nom)}</h2>
-          <div class="detail-sub">
-            <span class="stars${p.rarete === 5 ? " s5" : ""}">${p.rarete ? "★".repeat(p.rarete) : "—"}</span>
-            <span class="sep">·</span><span>${esc(p.element)}</span>
-            <span class="sep">·</span><span class="wpn">${svgArme(p.arme)}${esc(p.arme)}</span>
-            <span class="sep">·</span><span>${esc(p.role)}</span>
-            ${p.tier ? `<span class="tier">${p.tier}</span>` : ""}
+    return `
+    <article class="fiche-perso" style="--el:${couleurPerso(g, p)}">
+      <a class="lien" href="#/jeu/${g.slug}">← Tous les personnages ${esc(g.court)}</a>
+      <header class="perso-tete">
+        <div class="perso-portrait"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}</div>
+        <div class="perso-id">
+          <p class="surtitre">${esc(p.region || "")} · ${esc(g.nom)}</p>
+          <h1>${esc(p.nom)}</h1>
+          <div class="perso-meta">
+            ${etoiles(p.rarete)}
+            <span class="meta-el">${iconeEl(p.element, 18)} ${esc(p.element)}</span>
+            <span>${esc(p.arme)}</span>
+            <span>${esc(p.role || "")}</span>
+            ${p.tier ? `<span class="tier">${esc(p.tier)}</span>` : ""}
+          </div>
+          ${p.bio ? `<p class="bio">${esc(p.bio)}</p>` : ""}
+          <div class="actions">
+            <a class="btn" href="#/nouveau-build?jeu=${g.slug}&perso=${nomUrl}">+ Publier mon build de ${esc(p.nom)}</a>
+            <a class="btn btn-fantome" href="#/nouveau-souvenir?type=dessin&jeu=${g.slug}&perso=${nomUrl}">+ Partager un dessin ou un screenshot</a>
           </div>
         </div>
       </header>
 
-      <section class="bio">
-        <h3 class="bio-label">Qui est ${esc(p.nom)} ?</h3>
-        <p>${esc(p.bio)}</p>
+      <nav class="sous-nav" aria-label="Sections du personnage">
+        ${ancre("s-guide", "Guide")}${ancre("s-builds", "Builds des membres", builds.length)}${ancre("s-creations", "Créations", creations.length)}${ancre("s-souvenirs", "Souvenirs", souvenirs.length)}${ancre("s-membres", "Membres", idsMembres.length)}
+      </nav>
+
+      <section class="bloc" id="s-guide"><h2>Le guide de ${esc(p.nom)}</h2>${guideDe(g, p)}</section>
+
+      <section class="bloc" id="s-builds">
+        <div class="bloc-tete"><h2>Builds des membres</h2><a class="btn btn-petit" href="#/nouveau-build?jeu=${g.slug}&perso=${nomUrl}">+ Publier le mien</a></div>
+        <div class="grille">${builds.map((b) => carteBuild(b, auteurs)).join("") || vide(`Personne n'a encore partagé son build de ${esc(p.nom)}.`)}</div>
       </section>
 
-      ${b ? panneauxBuild(p, b) : `
-        <section class="panel panel-empty">
-          <h3>${p.note ? "Pourquoi pas de build ici" : "Build en préparation"}</h3>
-          <p>${p.note ? esc(p.note) : `Le build de ${esc(p.nom)} n'a pas encore été vérifié sur les sources de référence,
-             et rien n'est affiché plutôt que quelque chose de faux. ${avecBuild} personnages ont déjà leur build complet.`}</p>
-        </section>`}
-    </article>
-  `;
-  document.getElementById("back").onclick = () => { location.hash = ""; };
-  brancherImages();
-}
-
-function panneauxBuild(p, b) {
-  const seq = (arr) => arr.map((s, i) => `${i ? '<span class="seq-arrow">›</span>' : ""}<span class="seq-item">${esc(s)}</span>`).join("");
-  return `
-    ${b.conseil ? `<aside class="conseil"><span class="conseil-tag">À retenir</span><p>${esc(b.conseil)}</p></aside>` : ""}
-    <div class="panels">
-      <section class="panel">
-        <h3>Armes recommandées</h3>
-        <ol class="rank-list">${b.armes.map((a, i) => `<li class="${i === 0 ? "best" : ""}">${iconeArme(a)}<span class="arme-nom">${esc(a)}</span></li>`).join("")}</ol>
+      <section class="bloc" id="s-creations">
+        <div class="bloc-tete"><h2>Dessins, screenshots et clips</h2><a class="btn btn-petit btn-fantome" href="#/nouveau-souvenir?type=dessin&jeu=${g.slug}&perso=${nomUrl}">+ Partager une création</a></div>
+        <div class="grille">${creations.map((m) => carteSouvenir(m, auteurs)).join("") || vide(`Aucune création sur ${esc(p.nom)} pour l'instant.`)}</div>
       </section>
 
-      <section class="panel">
-        <h3>Sets d'artefacts</h3>
-        <p class="panel-aide"><b>4p</b> = les 4 pièces du même set, pour avoir le bonus complet.
-           <b>2p + 2p</b> = deux demi-sets combinés, quand tu n'as pas encore le set entier.</p>
-        <ol class="sets">${b.artefacts.map(ligneSet).join("")}</ol>
+      <section class="bloc" id="s-souvenirs">
+        <h2>Souvenirs avec ${esc(p.nom)}</h2>
+        <div class="grille">${souvenirs.map((m) => carteSouvenir(m, auteurs)).join("") || '<p class="faible">Aucun souvenir lié à ce personnage.</p>'}</div>
       </section>
 
-      <section class="panel">
-        <h3>Stats principales</h3>
-        <dl>
-          <div class="stat-row"><dt>Sablier</dt><dd>${esc(b.stats.sablier)}</dd></div>
-          <div class="stat-row"><dt>Coupe</dt><dd>${esc(b.stats.coupe)}</dd></div>
-          <div class="stat-row"><dt>Couronne</dt><dd>${esc(b.stats.couronne)}</dd></div>
-        </dl>
-        <h3 class="sub">Substats, par priorité</h3>
-        <div class="seq">${seq(b.substats)}</div>
-        <h3 class="sub">Montée des talents</h3>
-        <div class="seq">${seq(b.talents)}</div>
+      <section class="bloc" id="s-membres">
+        <h2>Membres qui ont partagé ${esc(p.nom)}</h2>
+        <div class="joueurs">${idsMembres.map((i) => auteurs[i]).filter(Boolean).map((a) => `<a href="#/membre/${esc(a.id)}" class="joueur">${avatar(a, "s")}${esc(a.username)}</a>`).join("") || '<p class="faible">Personne pour l\'instant.</p>'}</div>
       </section>
+    </article>`;
+  }
 
-      <section class="panel panel-wide">
-        <h3>Équipes recommandées</h3>
-        <div class="teams">
-          ${b.equipes.map(t => `
-            <div class="team">
-              <div class="team-name">${esc(t.nom)}</div>
-              <div class="team-members">
-                ${t.membres.map(m => `<span class="member ${m === p.nom ? "self" : ""}">${esc(m)}</span>`).join("")}
-              </div>
-            </div>`).join("")}
+  pages.build = async ([id]) => {
+    const b = await S.build(id);
+    if (!b) return vide("Ce build n'existe pas ou a été supprimé.");
+    const g = jeu(b.game), a = await S.profile(b.author_id);
+    const peutSuppr = ME && (ME.id === b.author_id || estEquipe());
+    const perso = persoDe(b.game, b.character);
+    const champsRemplis = (g ? g.champs : []).filter((c) => b.fields && b.fields[c.cle]);
+    return `
+    <article class="fiche-build" style="--c:${g ? g.couleur : "#fff"}">
+      <a class="lien" href="#/jeu/${esc(b.game)}${perso ? "/" + esc(perso.id) : ""}">← ${esc(perso ? perso.nom : g ? g.nom : "Jeu")}</a>
+      <header>
+        <p class="surtitre">${esc(g ? g.motEntite : "Personnage")} · ${esc(g ? g.court : "")}</p>
+        <h1>${esc(b.character)}</h1>
+        <p class="chapo">${esc(b.title)}</p>
+        <div class="carte-bas">${avatar(a, "s")}<a href="#/membre/${esc(b.author_id)}">${esc(a ? a.username : "Membre")}</a><span class="faible">· ${esc(dateFr(b.created_at))}</span></div>
+      </header>
+      ${enAttente(b) ? `<p class="bandeau-attente">Ce build attend la validation d'un modérateur : pour l'instant, seuls toi et l'équipe le voyez.</p>` : ""}
+      <section class="galerie">
+        ${(b.images || []).map(urlSure).filter(Boolean).map((u, i) => `<button type="button" class="galerie-item" data-zoom-src="${esc(u)}" aria-label="Agrandir l'image ${i + 1}"><img src="${esc(u)}" alt="Capture ${i + 1} du build de ${esc(b.character)}" loading="lazy"></button>`).join("") || '<p class="faible">Pas d\'image pour ce build.</p>'}
+      </section>
+      ${champsRemplis.length ? `<dl class="champs">${champsRemplis.map((c) => `<div class="champ"><dt>${esc(c.label)}</dt><dd>${esc(b.fields[c.cle])}</dd></div>`).join("")}</dl>` : ""}
+      ${b.notes ? `<section class="notes"><h2>Conseils de l'auteur</h2><p>${esc(b.notes)}</p></section>` : ""}
+      <div class="actions">
+        <button class="btn ${b.liked ? "btn-on" : ""}" data-like="build" data-id="${esc(b.id)}">♥ ${b.like_count} ${b.liked ? "Tu aimes" : "J'aime"}</button>
+        <button class="btn btn-fantome" data-copier>Copier le lien</button>
+        ${peutSuppr ? `<button class="btn btn-danger" data-suppr-build="${esc(b.id)}">Supprimer</button>` : ""}
+        ${boutonSignaler("build", b.id, b.author_id)}
+      </div>
+    </article>`;
+  };
+
+  pages.evenements = async (_, q) => {
+    const filtre = q.get("jeu") || "";
+    const evts = await S.events(filtre ? { game: filtre } : {});
+    const groupes = { encours: [], avenir: [], termine: [] };
+    evts.forEach((e) => groupes[statut(e)].push(e));
+    groupes.avenir.reverse();
+    return `
+    <section class="page-tete">
+      <p class="surtitre">Événements</p>
+      <h1>Giveaways, lives, concours, défis</h1>
+      ${estEquipe() ? `<div class="actions"><a class="btn" href="#/nouvel-evenement">+ Créer un événement</a></div>` : ""}
+    </section>
+    ${filtresJeux("#/evenements", filtre)}
+    ${["encours", "avenir", "termine"].map((k) => `<section class="bloc"><h2>${k === "termine" ? "Archives" : STATUT_LABEL[k]}</h2><div class="liste-evt">${groupes[k].map(carteEvenement).join("") || '<p class="faible">Rien ici.</p>'}</div></section>`).join("")}`;
+  };
+
+  pages.evenement = async ([id]) => {
+    const e = await S.event(id);
+    if (!e) return vide("Cet événement n'existe pas.");
+    const [parts, mems, auteurs] = await Promise.all([S.participants(id), S.memories({ event: id }), profilsParId()]);
+    const t = TYPES[e.type] || { label: e.type, icone: "" };
+    const st = statut(e);
+    return `
+    <article class="fiche-evt">
+      <a class="lien" href="#/evenements">← Événements</a>
+      <p class="surtitre">${t.icone} ${esc(t.label)} · <span class="statut statut-${st}">${STATUT_LABEL[st]}</span></p>
+      <h1>${esc(e.title)}</h1>
+      <p class="faible">${pastilleJeu(e.game)} · ${esc(dateFr(e.starts_at, true))}${e.ends_at ? " → " + esc(dateFr(e.ends_at, true)) : ""}</p>
+      ${e.description ? `<p class="chapo">${esc(e.description)}</p>` : ""}
+      <section class="compteurs">
+        <div><b>${e.participant_count}</b><span>participants</span></div>
+        <div><b>${e.winners ? e.winners.split(",").length : "—"}</b><span>gagnants</span></div>
+        <div><b>${mems.length}</b><span>souvenirs</span></div>
+      </section>
+      ${e.winners ? `<p><b>Gagnants :</b> ${esc(e.winners)}</p>` : ""}
+      <div class="actions">
+        ${st !== "termine" ? (ME ? `<button class="btn ${e.joined ? "btn-on" : ""}" data-join="${esc(e.id)}">${e.joined ? "✓ Tu participes" : "Je participe"}</button>` : `<button class="btn btn-discord" data-action="login">Se connecter pour participer</button>`) : ""}
+        ${urlSure(e.live_url) ? `<a class="btn btn-fantome" href="${esc(e.live_url)}" target="_blank" rel="noopener">Voir le live ↗</a>` : ""}
+        ${ME ? `<a class="btn btn-fantome" href="#/nouveau-souvenir?evenement=${esc(e.id)}">+ Ajouter un souvenir</a>` : ""}
+      </div>
+      ${estEquipe() && st === "termine" && !e.winners ? `<form class="form form-ligne" data-form="gagnants" data-id="${esc(e.id)}"><label for="f-gagnants">Annoncer les gagnants</label><input id="f-gagnants" name="winners" placeholder="Pseudo1, Pseudo2"><button class="btn btn-petit">Enregistrer</button></form>` : ""}
+      <section class="bloc"><h2>Participants</h2><div class="joueurs">${parts.map((p) => `<a href="#/membre/${esc(p.id)}" class="joueur">${avatar(p, "s")}${esc(p.username)}</a>`).join("") || '<p class="faible">Personne pour l\'instant.</p>'}</div></section>
+      <section class="bloc"><h2>Souvenirs de l'événement</h2><div class="grille">${mems.map((m) => carteSouvenir(m, auteurs)).join("") || '<p class="faible">Aucun souvenir encore.</p>'}</div></section>
+    </article>`;
+  };
+
+  // ---------- MODÉRATION (équipe uniquement)
+  pages.moderation = async () => {
+    if (!ME) return doitSeConnecter();
+    if (!estEquipe()) return vide("Cette page est réservée aux modérateurs et admins.");
+    const [file, auteurs] = await Promise.all([S.moderation(), profilsParId()]);
+    const bloc = (o) => {
+      const a = auteurs[o.author_id];
+      const imgs = (o.type === "build" ? o.images || [] : [o.image_url]).map(urlSure).filter(Boolean);
+      const lien = o.type === "build" ? `#/build/${esc(o.id)}` : "";
+      return `<article class="carte modo-item ${o.signalements.length ? "modo-signale" : ""}">
+        <div class="modo-images">${imgs.map((u) => `<button type="button" class="galerie-item" data-zoom-src="${esc(u)}" aria-label="Agrandir"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("") || '<p class="faible">Sans image</p>'}</div>
+        <div class="modo-corps">
+          <div class="tags">${pastilleJeu(o.game)}<span class="type-tag">${o.type === "build" ? "Build" : esc(TYPES_POST[o.kind] || "Souvenir")}</span>${enAttente(o) ? '<span class="attente">En attente</span>' : '<span class="type-tag">Déjà en ligne</span>'}</div>
+          <h3>${lien ? `<a href="${lien}">${esc(o.title)}</a>` : esc(o.title)}</h3>
+          <p class="faible">${esc(o.character || "")} · par <a href="#/membre/${esc(o.author_id)}">${esc(a ? a.username : "Membre")}</a> · ${ilYa(o.created_at)}</p>
+          ${o.signalements.length ? `<div class="modo-signalements"><b>${o.signalements.length} signalement${o.signalements.length > 1 ? "s" : ""}</b><ul>${o.signalements.map((r) => `<li>${esc(r.reason)} <span class="faible">— ${esc(auteurs[r.user_id] ? auteurs[r.user_id].username : "membre")}</span></li>`).join("")}</ul></div>` : ""}
+          <div class="actions">
+            <button class="btn btn-petit" data-moderer="approve" data-type="${o.type}" data-id="${esc(o.id)}">${enAttente(o) ? "Approuver" : "Garder en ligne"}</button>
+            <button class="btn btn-petit btn-danger" data-moderer="reject" data-type="${o.type}" data-id="${esc(o.id)}">Supprimer définitivement</button>
+          </div>
         </div>
-      </section>
-    </div>`;
-}
+      </article>`;
+    };
+    return `
+    <section class="page-tete">
+      <p class="surtitre">Équipe</p>
+      <h1>Modération</h1>
+      <p class="chapo">Toute image envoyée par un membre attend ici avant d'être visible. Une publication signalée 3 fois est retirée automatiquement et revient ici. Les plus signalées sont en haut.</p>
+    </section>
+    <div class="liste-modo">${file.map(bloc).join("") || vide("Rien à vérifier. Tout est en ordre.")}</div>`;
+  };
 
-/* Si une image déclarée dans data.js n'existe pas ou ne charge pas :
-   on réessaie avec les autres extensions courantes (une capture d'écran est
-   souvent un .jpg), puis on abandonne et la crête d'élément reprend sa place.
-   Aucune case vide, jamais d'icône cassée. */
-const EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
+  // ---------- FORMULAIRES
+  pages.moi = async () => {
+    if (!ME) return doitSeConnecter();
+    return `
+    <section class="page-tete"><p class="surtitre">Mon compte</p><h1>${esc(ME.username)}</h1>
+      <div class="actions"><a class="btn btn-fantome btn-petit" href="#/membre/${esc(ME.id)}">Voir mon profil public</a></div></section>
+    <form class="form" data-form="profil">
+      <fieldset>
+        <legend>Quels jeux suis-tu ?</legend>
+        <p class="aide">La page d'accueil s'adapte à tes choix.</p>
+        <div class="coches">${JEUX.map((g) => `<label class="coche" style="--c:${g.couleur}"><input type="checkbox" name="games" id="f-jeu-${g.slug}" value="${g.slug}" ${(ME.games || []).includes(g.slug) ? "checked" : ""}><span>${esc(g.nom)}</span></label>`).join("")}</div>
+      </fieldset>
+      <label for="f-bio">Bio</label>
+      <textarea id="f-bio" name="bio" rows="3" maxlength="280" placeholder="Ton main, ton style de jeu…">${esc(ME.bio || "")}</textarea>
+      <button class="btn">Enregistrer</button>
+    </form>
+    <section class="bloc raccourcis">
+      <a class="btn btn-fantome" href="#/nouveau-build">+ Publier un build</a>
+      <a class="btn btn-fantome" href="#/nouveau-souvenir">+ Ajouter un souvenir</a>
+      ${estEquipe() ? `<a class="btn btn-fantome" href="#/nouvel-evenement">+ Créer un événement</a>` : ""}
+      <button class="btn btn-fantome" data-action="logout">Se déconnecter</button>
+    </section>`;
+  };
 
-function brancherImages() {
-  app.querySelectorAll("img.fond").forEach(img => {
-    img.addEventListener("error", () => {
-      const src = img.getAttribute("src") || "";
-      const point = src.lastIndexOf(".");
-      const ext = point > -1 ? src.slice(point).toLowerCase() : "";
-      const suivante = EXTENSIONS[EXTENSIONS.indexOf(ext) + 1];
-      if (ext && suivante) {           // il reste une extension à essayer
-        img.setAttribute("src", src.slice(0, point) + suivante);
+  pages["nouveau-build"] = async (_, q) => {
+    if (!ME) return doitSeConnecter();
+    const slug = q.get("jeu") || (ME.games && ME.games[0]) || JEUX[0].slug;
+    const g = jeu(slug) || JEUX[0];
+    const persoChoisi = q.get("perso") || "";
+    const champPerso = g.roster
+      ? `<select id="f-perso" name="character" required><option value="">Choisis un personnage</option>${g.roster.slice().sort((a, b) => a.nom.localeCompare(b.nom, "fr")).map((p) => `<option ${p.nom === persoChoisi ? "selected" : ""}>${esc(p.nom)}</option>`).join("")}</select>`
+      : `<input id="f-perso" name="character" required list="l-persos" maxlength="60" value="${esc(persoChoisi)}" placeholder="${esc(g.persos[0] || "Nom")}">`;
+    return `
+    <section class="page-tete"><p class="surtitre">Nouveau build</p><h1>Partage ton build${persoChoisi ? " de " + esc(persoChoisi) : ""}</h1></section>
+    <nav class="filtres">${JEUX.map((x) => `<a href="#/nouveau-build?jeu=${x.slug}" class="${x.slug === g.slug ? "on" : ""}" style="--c:${x.couleur}">${esc(x.court)}</a>`).join("")}</nav>
+    <form class="form" data-form="build" data-jeu="${g.slug}" style="--c:${g.couleur}">
+      <label for="f-perso">${esc(g.motEntite)} *</label>
+      ${champPerso}
+      <datalist id="l-persos">${g.persos.map((p) => `<option value="${esc(p)}">`).join("")}</datalist>
+      <label for="f-titre">Titre du build *</label>
+      <input id="f-titre" name="title" required maxlength="80" placeholder="ex : ${esc(persoChoisi || g.persos[0] || "Mon perso")} soutien full PV">
+      <label for="f-images">Captures de ton build * <span class="aide">(1 à ${MAX_IMAGES_BUILD} images, 5 Mo max chacune)</span></label>
+      <input id="f-images" type="file" name="images" accept="${TYPES_IMAGE.join(",")}" multiple required>
+      <div class="apercus" id="apercus"></div>
+      <p class="aide">Écran du personnage, de l'arme, des artefacts… Chaque image est vérifiée par un modérateur avant d'être visible par tout le monde. Pas de contenu choquant, sexuel ou volé : les images refusées sont supprimées.</p>
+      <label for="f-notes">Conseils</label>
+      <textarea id="f-notes" name="notes" rows="3" maxlength="1500" placeholder="Pourquoi ces choix, les alternatives, les pièges à éviter…"></textarea>
+      <details class="details-form">
+        <summary>Détailler par écrit (facultatif)</summary>
+        <div class="deux-col">
+          ${g.champs.map((c) => `<div><label for="f-${c.cle}">${esc(c.label)}</label><input id="f-${c.cle}" name="f_${c.cle}" maxlength="160"></div>`).join("")}
+        </div>
+      </details>
+      <button class="btn">Publier le build</button>
+    </form>`;
+  };
+
+  pages["nouveau-souvenir"] = async (_, q) => {
+    if (!ME) return doitSeConnecter();
+    const evts = await S.events();
+    const evtSel = q.get("evenement") || "";
+    const evtObj = evts.find((e) => e.id === evtSel);
+    const type = TYPES_POST[q.get("type")] ? q.get("type") : "souvenir";
+    const jeuSel = q.get("jeu") || (evtObj && evtObj.game) || "";
+    const persoSel = q.get("perso") || "";
+    const gSel = jeu(jeuSel);
+    return `
+    <section class="page-tete"><p class="surtitre">${type === "souvenir" ? "Mémoire" : "Création"}</p><h1>${type === "souvenir" ? "Ajouter un souvenir" : "Partager une création"}${persoSel ? " · " + esc(persoSel) : ""}</h1>
+      <p class="chapo">Un dessin, un screenshot ou un clip lié à un personnage apparaît dans la section de ce personnage.</p></section>
+    <form class="form" data-form="souvenir">
+      <div class="deux-col">
+        <div><label for="f-s-type">Type</label>
+          <select id="f-s-type" name="kind">${Object.entries(TYPES_POST).map(([k, v]) => `<option value="${k}" ${k === type ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></div>
+        <div><label for="f-s-perso">Personnage concerné</label>
+          <input id="f-s-perso" name="character" list="l-persos-souvenir" maxlength="60" value="${esc(persoSel)}" placeholder="Facultatif">
+          <datalist id="l-persos-souvenir">${(gSel ? gSel.persos : []).map((n) => `<option value="${esc(n)}">`).join("")}</datalist></div>
+      </div>
+      <label for="f-s-titre">Titre *</label>
+      <input id="f-s-titre" name="title" required maxlength="100" placeholder="ex : Le tirage du Giveaway #08">
+      <label for="f-s-desc">Ce qui s'est passé</label>
+      <textarea id="f-s-desc" name="description" rows="3" maxlength="600"></textarea>
+      <div class="deux-col">
+        <div><label for="f-s-jeu">Jeu</label>
+          <select id="f-s-jeu" name="game"><option value="">Toute la communauté</option>${JEUX.map((g) => `<option value="${g.slug}" ${jeuSel === g.slug ? "selected" : ""}>${esc(g.nom)}</option>`).join("")}</select></div>
+        <div><label for="f-s-evt">Événement lié</label>
+          <select id="f-s-evt" name="event_id"><option value="">Aucun</option>${evts.map((e) => `<option value="${esc(e.id)}" ${e.id === evtSel ? "selected" : ""}>${esc(e.title)}</option>`).join("")}</select></div>
+        <div><label for="f-s-date">Date</label><input id="f-s-date" type="date" name="happened_on" value="${new Date().toISOString().slice(0, 10)}" required></div>
+        <div><label for="f-s-lien">Lien (clip, VOD…)</label><input id="f-s-lien" type="url" name="link_url" placeholder="https://"></div>
+      </div>
+      <label for="f-s-img">Image (5 Mo max)</label>
+      <input id="f-s-img" type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif">
+      <button class="btn">Ajouter à la mémoire</button>
+    </form>`;
+  };
+
+  pages["nouvel-evenement"] = async () => {
+    if (!ME) return doitSeConnecter();
+    if (!estEquipe()) return vide("Seuls les modérateurs et admins peuvent créer un événement.");
+    return `
+    <section class="page-tete"><p class="surtitre">Événements</p><h1>Créer un événement</h1></section>
+    <form class="form" data-form="evenement">
+      <div class="deux-col">
+        <div><label for="f-e-type">Type</label><select id="f-e-type" name="type">${Object.entries(TYPES).map(([k, t]) => `<option value="${k}">${t.icone} ${esc(t.label)}</option>`).join("")}</select></div>
+        <div><label for="f-e-jeu">Jeu</label><select id="f-e-jeu" name="game"><option value="">Toute la communauté</option>${JEUX.map((g) => `<option value="${g.slug}">${esc(g.nom)}</option>`).join("")}</select></div>
+      </div>
+      <label for="f-e-titre">Titre *</label>
+      <input id="f-e-titre" name="title" required maxlength="100" placeholder="ex : Giveaway #08">
+      <label for="f-e-desc">Description</label>
+      <textarea id="f-e-desc" name="description" rows="3" maxlength="1000"></textarea>
+      <div class="deux-col">
+        <div><label for="f-e-debut">Début *</label><input id="f-e-debut" type="datetime-local" name="starts_at" required></div>
+        <div><label for="f-e-fin">Fin</label><input id="f-e-fin" type="datetime-local" name="ends_at"></div>
+      </div>
+      <label for="f-e-live">Lien du live (Twitch, YouTube…)</label>
+      <input id="f-e-live" type="url" name="live_url" placeholder="https://">
+      <button class="btn">Créer l'événement</button>
+    </form>`;
+  };
+
+  // ---------- routeur
+  const ROUTES = {
+    "": "accueil", memoire: "memoire", communaute: "communaute", membre: "membre", jeux: "jeux", jeu: "jeu",
+    build: "build", evenements: "evenements", evenement: "evenement", moi: "moi",
+    "nouveau-build": "nouveau-build", moderation: "moderation", "nouveau-souvenir": "nouveau-souvenir", "nouvel-evenement": "nouvel-evenement"
+  };
+
+  async function rendre() {
+    const brut = location.hash.replace(/^#\/?/, "");
+    const [chemin, qs] = brut.split("?");
+    const parts = chemin.split("/").filter(Boolean).map(decodeURIComponent);
+    const nom = ROUTES[parts[0] || ""] || null;
+    document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.dataset.page === (parts[0] || "")));
+    if (!nom) { $app.innerHTML = vide("Page introuvable.", `<a class="btn" href="#/">Retour à l'accueil</a>`); return; }
+    $app.setAttribute("aria-busy", "true");
+    try {
+      const r = await pages[nom](parts.slice(1), new URLSearchParams(qs || ""));
+      $app.innerHTML = typeof r === "string" ? r : r.html;
+      if (r && r.apres) r.apres();
+    } catch (err) {
+      console.error(err);
+      $app.innerHTML = vide("Impossible de charger cette page : " + esc(err.message) + ". Réessaie dans un instant.");
+    }
+    $app.removeAttribute("aria-busy");
+    document.title = CFG.NOM_SITE + (nom === "accueil" ? "" : " · " + (($app.querySelector("h1") || {}).textContent || ""));
+    if (!rendre.memeEcran) window.scrollTo(0, 0);
+    rendre.memeEcran = false;
+  }
+  const rafraichir = () => { rendre.memeEcran = true; return rendre(); };
+
+  // ---------- actions
+  document.addEventListener("click", async (ev) => {
+    const f = ev.target.closest("[data-filtre]");
+    if (f) {
+      if (f.dataset.filtre === "reset") { Object.assign(filtresRoster, { q: "", el: "", arme: "", rar: "" }); const i = document.getElementById("f-roster-q"); if (i) i.value = ""; }
+      else filtresRoster[f.dataset.filtre] = filtresRoster[f.dataset.filtre] === f.dataset.val ? "" : f.dataset.val;
+      return appliquerFiltresRoster();
+    }
+    if (ev.target.closest("[data-roster-plus]")) {
+      rosterOuvert = !rosterOuvert;
+      appliquerFiltresRoster();
+      if (!rosterOuvert) document.getElementById("grille-persos").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const z = ev.target.closest("[data-zoom-src],img[data-zoom]");
+    if (z) { ouvrirZoom(z.dataset.zoomSrc || z.getAttribute("src")); return; }
+    if (ev.target.closest(".zoom")) { fermerZoom(); return; }
+    const a = ev.target.closest("[data-ancre]");
+    if (a) { const cible = document.getElementById(a.dataset.ancre); if (cible) cible.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    const el = ev.target.closest("[data-action],[data-like],[data-join],[data-suppr-build],[data-suppr-souvenir],[data-copier],[data-signaler],[data-moderer]");
+    if (!el) return;
+    ev.preventDefault();
+    try {
+      if (el.dataset.action === "login") return S.signIn();
+      if (el.dataset.action === "logout") return S.signOut();
+      if (el.dataset.action === "reset") return S.reset();
+      if (el.dataset.action === "role-demo") return S.changerRoleDemo();
+      if (!ME) return toast("Connecte-toi avec Discord d'abord.");
+      if (el.dataset.like) { await S.toggleLike(el.dataset.like, el.dataset.id); return rafraichir(); }
+      if (el.dataset.join) { await S.toggleJoin(el.dataset.join); toast("Participation mise à jour"); return rafraichir(); }
+      if (el.dataset.supprBuild && confirmer("Supprimer ce build ?", el)) { await S.deleteBuild(el.dataset.supprBuild); toast("Build supprimé"); location.hash = "#/moi"; }
+      if (el.dataset.supprSouvenir && confirmer("Supprimer ce souvenir ?", el)) { await S.deleteMemory(el.dataset.supprSouvenir); toast("Souvenir supprimé"); return rafraichir(); }
+      if (el.dataset.signaler) {
+        await S.report(el.dataset.signaler, el.dataset.id, el.dataset.raison);
+        toast("Merci, l'équipe va vérifier");
+        const d = el.closest("details"); if (d) d.open = false;
         return;
       }
-      img.closest(".avec-fond")?.classList.remove("avec-fond");
-      img.remove();
-    });
+      if (el.dataset.moderer) {
+        if (el.dataset.moderer === "reject" && !confirmer("", el)) return;
+        await S[el.dataset.moderer](el.dataset.type, el.dataset.id);
+        toast(el.dataset.moderer === "approve" ? "Approuvé : visible par tous" : "Supprimé");
+        await majCompteurModeration();
+        return rafraichir();
+      }
+      if ("copier" in el.dataset) { await navigator.clipboard.writeText(location.href); toast("Lien copié"); }
+    } catch (err) { toast("Erreur : " + err.message); }
   });
 
-  // icônes de sets : même principe, mais l'emplacement reste visible (vide)
-  app.querySelectorAll("img.icone-set").forEach(img => {
-    img.addEventListener("error", () => {
-      const src = img.getAttribute("src") || "";
-      const point = src.lastIndexOf(".");
-      const ext = point > -1 ? src.slice(point).toLowerCase() : "";
-      const suivante = EXTENSIONS[EXTENSIONS.indexOf(ext) + 1];
-      if (ext && suivante) { img.setAttribute("src", src.slice(0, point) + suivante); return; }
-      img.parentElement?.classList.add("set-icone-vide");
-      img.remove();
-    });
+  function ouvrirZoom(src) {
+    if (!urlSure(src)) return;
+    fermerZoom();
+    const z = document.createElement("div");
+    z.className = "zoom"; z.setAttribute("role", "dialog"); z.setAttribute("aria-label", "Image agrandie");
+    z.innerHTML = `<img src="${esc(src)}" alt=""><button type="button" class="zoom-fermer" aria-label="Fermer">×</button>`;
+    document.body.appendChild(z);
+  }
+  function fermerZoom() { document.querySelectorAll(".zoom").forEach((z) => z.remove()); }
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") fermerZoom(); });
+
+  async function majCompteurModeration() {
+    const lien = document.getElementById("nav-moderation");
+    if (!lien) return;
+    try {
+      const n = (await S.moderation()).length;
+      lien.querySelector("b").textContent = n || "";
+      lien.querySelector("b").hidden = !n;
+    } catch (e) { /* le compteur n'est qu'un plus */ }
+  }
+
+  let attenteResize;
+  window.addEventListener("resize", () => { clearTimeout(attenteResize); attenteResize = setTimeout(appliquerFiltresRoster, 120); });
+  document.addEventListener("input", (ev) => {
+    if (ev.target.id === "f-roster-q") { filtresRoster.q = ev.target.value; appliquerFiltresRoster(); }
   });
-}
+  document.addEventListener("change", (ev) => {
+    if (ev.target.id === "f-images") {
+      const zone = document.getElementById("apercus");
+      const fichiers = [...ev.target.files];
+      zone.innerHTML = "";
+      try { verifierImages(fichiers, MAX_IMAGES_BUILD); } catch (err) { toast(err.message); ev.target.value = ""; return; }
+      fichiers.forEach((f) => { const i = document.createElement("img"); i.alt = ""; i.src = URL.createObjectURL(f); zone.appendChild(i); });
+    }
+    if (ev.target.id === "f-s-jeu") {
+      const g = jeu(ev.target.value);
+      const dl = document.getElementById("l-persos-souvenir");
+      if (dl) dl.innerHTML = (g ? g.persos : []).map((n) => `<option value="${esc(n)}">`).join("");
+    }
+  });
 
-/* ---------- Routeur ---------- */
-function router() {
-  const id = location.hash.replace("#/", "");
-  const p = PERSONNAGES.find(x => x.id === id);
-  if (p) { vueFiche(p); document.title = `${p.nom} — La Reyancerie`; }
-  else { vueListe(); document.title = "La Reyancerie — tous les personnages de Genshin Impact en français"; }
-  window.scrollTo(0, 0);
-}
+  // Confirmation en deux clics (pas de boîte de dialogue bloquante).
+  function confirmer(msg, el) {
+    if (el.dataset.arme === "1") return true;
+    el.dataset.arme = "1";
+    const txt = el.textContent;
+    el.textContent = "Clique encore pour confirmer";
+    setTimeout(() => { el.dataset.arme = ""; el.textContent = txt; }, 3000);
+    return false;
+  }
 
-window.addEventListener("hashchange", router);
-router();
+  document.addEventListener("submit", async (ev) => {
+    const f = ev.target.closest("form[data-form]");
+    if (!f) return;
+    ev.preventDefault();
+    const btn = f.querySelector("button");
+    btn.disabled = true;
+    const d = new FormData(f);
+    const txt = (k) => String(d.get(k) || "").trim();
+    try {
+      switch (f.dataset.form) {
+        case "profil":
+          ME = await S.updateProfile({ games: d.getAll("games"), bio: txt("bio") });
+          toast("Profil enregistré");
+          break;
+        case "build": {
+          const g = jeu(f.dataset.jeu), fields = {};
+          g.champs.forEach((c) => (fields[c.cle] = txt("f_" + c.cle)));
+          const fichiers = d.getAll("images").filter((x) => x && x.size > 0);
+          if (!fichiers.length) throw new Error("ajoute au moins une capture de ton build");
+          verifierImages(fichiers, MAX_IMAGES_BUILD);
+          btn.textContent = "Envoi des images…";
+          const b = await S.createBuild({ game: g.slug, character: txt("character"), title: txt("title"), fields, notes: txt("notes") }, fichiers);
+          toast(estEquipe() ? "Build publié" : "Build envoyé : il sera visible après validation");
+          location.hash = "#/build/" + b.id;
+          break;
+        }
+        case "souvenir": {
+          const fichier = d.get("image");
+          const aFichier = fichier && fichier.size > 0;
+          if (aFichier) verifierImages([fichier], 1);
+          const game = txt("game") || null;
+          let character = txt("character");
+          const g = jeu(game);
+          let perso = null;
+          if (character && g && g.roster) {
+            perso = persoDe(game, character);
+            if (!perso) throw new Error("personnage « " + character + " » introuvable : choisis-le dans la liste proposée");
+            character = perso.nom;
+          }
+          if (character && !game) throw new Error("choisis le jeu du personnage");
+          const kind = txt("kind") || "souvenir";
+          await S.createMemory({
+            kind, character, title: txt("title"), description: txt("description"), game,
+            event_id: txt("event_id") || null, happened_on: txt("happened_on"), link_url: txt("link_url")
+          }, aFichier ? fichier : null);
+          toast(aFichier && !estEquipe() ? "Envoyé : visible après validation d'un modérateur" : kind === "souvenir" ? "Souvenir ajouté à la mémoire" : "Création publiée");
+          location.hash = perso ? "#/jeu/" + game + "/" + perso.id : kind === "souvenir" ? "#/memoire" : "#/jeu/" + (game || "");
+          if (!perso && kind !== "souvenir" && !game) location.hash = "#/moi";
+          break;
+        }
+        case "evenement": {
+          const e = await S.createEvent({
+            type: txt("type"), game: txt("game") || null, title: txt("title"), description: txt("description"),
+            starts_at: new Date(txt("starts_at")).toISOString(), ends_at: txt("ends_at") ? new Date(txt("ends_at")).toISOString() : null,
+            live_url: txt("live_url"), winners: ""
+          });
+          toast("Événement créé");
+          location.hash = "#/evenement/" + e.id;
+          break;
+        }
+        case "gagnants":
+          await S.updateEvent(f.dataset.id, { winners: txt("winners") });
+          toast("Gagnants enregistrés");
+          await rafraichir();
+          break;
+      }
+    } catch (err) {
+      toast("Erreur : " + err.message);
+    }
+    btn.disabled = false;
+    if (f.dataset.form === "build") btn.textContent = "Publier le build";
+  });
+
+  // ---------- démarrage
+  async function demarrer() {
+    await S.init();
+    ME = await S.me();
+    const zone = document.getElementById("zone-compte");
+    zone.innerHTML = ME
+      ? `<a href="#/moi" class="compte">${avatar(ME, "s")}<span>${esc(ME.username)}</span></a>`
+      : `<button class="btn btn-discord btn-petit" data-action="login">Connexion Discord</button>`;
+    if (S.mode === "demo") {
+      const b = document.getElementById("bandeau-demo");
+      b.hidden = false;
+      b.innerHTML = `Mode démo : membres et contenus fictifs, enregistrés uniquement dans ce navigateur. ${ME ? `Tu es connecté comme « ${esc(ME.username)} » (${estEquipe() ? "admin" : "simple membre"}). <button class="lien-discret" data-action="role-demo">Passer en ${estEquipe() ? "simple membre" : "admin"}</button> ·` : "« Connexion Discord » te connecte comme un admin fictif."} <button class="lien-discret" data-action="reset">Réinitialiser la démo</button>`;
+    }
+    if (estEquipe()) {
+      const a = document.createElement("a");
+      a.href = "#/moderation"; a.dataset.page = "moderation"; a.id = "nav-moderation";
+      a.innerHTML = 'Modération <b class="compteur" hidden></b>';
+      document.querySelector(".nav").appendChild(a);
+      majCompteurModeration();
+    }
+    if (CFG.INVITATION_DISCORD) {
+      document.getElementById("lien-discord").innerHTML = `<a class="lien" href="${esc(CFG.INVITATION_DISCORD)}" target="_blank" rel="noopener">Rejoindre le serveur Discord ↗</a>`;
+    }
+    window.addEventListener("hashchange", rendre);
+    rendre();
+  }
+  demarrer().catch((err) => {
+    $app.innerHTML = vide("Le site n'a pas pu démarrer : " + esc(err.message));
+  });
+})();
