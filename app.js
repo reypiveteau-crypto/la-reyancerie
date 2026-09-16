@@ -169,6 +169,8 @@
       <g fill="#fff" opacity=".85"><rect x="40" y="42" width="3" height="3"/><rect x="45" y="50" width="3" height="3"/><rect x="40" y="58" width="3" height="3"/><rect x="8" y="68" width="3" height="3"/><rect x="72" y="58" width="3" height="3"/><rect x="86" y="52" width="3" height="3"/><rect x="86" y="62" width="3" height="3"/><rect x="17" y="56" width="3" height="3"/></g>
       <path class="em-eclair" d="M24 6 14 26h8l-4 14 14-22h-9l5-12z" fill="#ffe14d"/>`
   };
+  // Image de fond d'une tuile de jeu : jeux/<slug>.png (ou .jpg/.jpeg/.webp), facultative
+  const fondTuile = (g) => `<img class="tuile-fond" src="${esc(IMGS["jeux/" + g.slug] || "jeux/" + g.slug + ".png")}" alt="" loading="lazy" data-repli="cacher">`;
   const embleme = (g) => EMBLEMES[g.slug] ? `<svg class="tuile-embleme" viewBox="0 0 100 100" aria-hidden="true">${EMBLEMES[g.slug]}</svg>` : "";
 
   // ---------- cartes
@@ -264,7 +266,7 @@
     <section class="bloc">
       <div class="bloc-tete"><h2>${ME ? "Tes jeux" : "Les jeux"}</h2><a href="#/jeux" class="lien">Tous les jeux →</a></div>
       <div class="grille grille-jeux">
-        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu tuile-${g.slug}" data-tilt href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}<span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
+        ${mesJeux.map((s) => { const g = jeu(s); if (!g) return ""; const n = builds.filter((b) => b.game === s).length; return `<a class="tuile-jeu tuile-${g.slug}" data-tilt href="#/jeu/${g.slug}" style="--c:${g.couleur}">${fondTuile(g)}${embleme(g)}<span class="tuile-nom">${esc(g.nom)}</span><span class="tuile-chiffre">${n} build${n > 1 ? "s" : ""}</span></a>`; }).join("")}
       </div>
     </section>
 
@@ -384,7 +386,7 @@
     <div class="grille grille-jeux-grands">
       ${JEUX.map((g) => {
         const nb = builds.filter((b) => b.game === g.slug).length, ns = mems.filter((m) => m.game === g.slug).length, nj = profils.filter((p) => (p.games || []).includes(g.slug)).length;
-        return `<a class="tuile-jeu tuile-grande tuile-${g.slug}" data-tilt href="#/jeu/${g.slug}" style="--c:${g.couleur}">${embleme(g)}
+        return `<a class="tuile-jeu tuile-grande tuile-${g.slug}" data-tilt href="#/jeu/${g.slug}" style="--c:${g.couleur}">${fondTuile(g)}${embleme(g)}
           <span class="tuile-nom">${esc(g.nom)}</span>
           <span class="tuile-stats"><span><b>${nj}</b> joueur${nj > 1 ? "s" : ""}</span><span><b>${nb}</b> build${nb > 1 ? "s" : ""}</span><span><b>${ns}</b> souvenir${ns > 1 ? "s" : ""}</span></span>
         </a>`;
