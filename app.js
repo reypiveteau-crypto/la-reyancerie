@@ -453,7 +453,7 @@
 
   function cartePerso(g, p, n) {
     const src = srcPortrait(g, p);
-    return `<a class="perso" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
+    return `<a class="perso" title="${esc(p.nom)}" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
       <span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>
       ${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-repli="cacher">` : ""}
       <span class="perso-el" title="${esc(p.element)}">${iconeEl(g, p.element, 15)}</span>
@@ -877,6 +877,7 @@
     if (themeCourant) document.documentElement.dataset.jeu = themeCourant;
     else delete document.documentElement.dataset.jeu;
     if (themeCourant === "genshin") DecorGenshin.allumer(); else DecorGenshin.eteindre();
+    if (themeCourant === "hsr") DecorHSR.allumer(); else DecorHSR.eteindre();
     document.getElementById("banniere-accueil").hidden = !(nom === "accueil" && banniereOK);
     document.title = CFG.NOM_SITE + (nom === "accueil" ? "" : " · " + (($app.querySelector("h1") || {}).textContent || ""));
     if (!rendre.memeEcran) window.scrollTo(0, 0);
@@ -1264,6 +1265,211 @@
       actif = false; cancelAnimationFrame(raf);
       if (cv) cv.hidden = true;
     }
+    return { allumer, eteindre };
+  })();
+
+  // ============================================================
+  //  DÉCOR ANIMÉ DE L'ESPACE HSR — « Voie de l'Express astral »
+  //  Nébuleuses, champ d'étoiles en dérive (effet de voyage),
+  //  planète à anneaux, rail de lumière dorée que parcourt un
+  //  train stylisé, étoiles filantes. Dessiné en code.
+  // ============================================================
+  const DecorHSR = (() => {
+    let cv, ctx, W = 0, H = 0, dpr = 1, actif = false, raf = 0, dernier = 0;
+    let fond, planete, proches = [], filantes = [];
+    const calme = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let graine = 3;
+    const alea = () => ((graine = (graine * 16807) % 2147483647) - 1) / 2147483646;
+    const toile = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+
+    // courbe du rail (bézier cubique), en proportion de l'écran
+    const rail = () => [[W * 1.08, H * .78], [W * .7, H * .5], [W * .35, H * .52], [-W * .08, H * .12]];
+    function pointRail(t) {
+      const [a, b, c, d] = rail(), u = 1 - t;
+      const x = u * u * u * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t * t * t * d[0];
+      const y = u * u * u * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t * t * t * d[1];
+      return [x, y];
+    }
+
+    function peindre() {
+      fond = toile(W * dpr, H * dpr);
+      const g = fond.getContext("2d"); g.scale(dpr, dpr);
+      const ciel = g.createLinearGradient(0, 0, W, H);
+      ciel.addColorStop(0, "#03050f"); ciel.addColorStop(.5, "#0a0f2e"); ciel.addColorStop(1, "#150b2c");
+      g.fillStyle = ciel; g.fillRect(0, 0, W, H);
+      // nébuleuses
+      graine = 5;
+      const nebs = [["107,76,255", .72, .3, .55, .22], ["47,208,200", .2, .62, .45, .12], ["255,95,168", .9, .75, .35, .12], ["233,207,143", .45, .15, .3, .07]];
+      nebs.forEach(([c, x, y, r, a]) => {
+        for (let k = 0; k < 7; k++) {
+          const cx = W * (x + (alea() - .5) * .25), cy = H * (y + (alea() - .5) * .2), rr = Math.max(W, H) * r * (.4 + alea() * .6);
+          const n = g.createRadialGradient(cx, cy, 0, cx, cy, rr);
+          n.addColorStop(0, `rgba(${c},${a * (.5 + alea() * .5)})`); n.addColorStop(1, `rgba(${c},0)`);
+          g.fillStyle = n; g.beginPath(); g.arc(cx, cy, rr, 0, 7); g.fill();
+        }
+      });
+      // poussière d'étoiles fixe
+      graine = 17;
+      for (let i = 0; i < W * H / 900; i++) {
+        g.fillStyle = `rgba(${alea() < .15 ? "233,207,143" : alea() < .3 ? "185,164,255" : "235,240,255"},${alea() * .7})`;
+        g.fillRect(alea() * W, alea() * H, alea() < .9 ? 1 : 1.6, alea() < .9 ? 1 : 1.6);
+      }
+      // petite planète lointaine
+      const px = W * .86, py = H * .16, pr = Math.min(W, H) * .035;
+      const sp = g.createRadialGradient(px - pr * .4, py - pr * .4, pr * .1, px, py, pr);
+      sp.addColorStop(0, "#9fe7ff"); sp.addColorStop(1, "#23407a");
+      g.fillStyle = sp; g.beginPath(); g.arc(px, py, pr, 0, 7); g.fill();
+      const hs = g.createRadialGradient(px, py, pr, px, py, pr * 3);
+      hs.addColorStop(0, "rgba(120,200,255,.25)"); hs.addColorStop(1, "rgba(120,200,255,0)");
+      g.fillStyle = hs; g.beginPath(); g.arc(px, py, pr * 3, 0, 7); g.fill();
+
+      // grande planète à anneaux (calque séparé pour la parallaxe)
+      const R = Math.min(W, H) * .32;
+      planete = toile(Math.ceil(R * 5 * dpr), Math.ceil(R * 3 * dpr));
+      const p = planete.getContext("2d"); p.scale(dpr, dpr);
+      const cx = R * 2.5, cy = R * 1.5;
+      const anneau = (devant) => {
+        p.save(); p.translate(cx, cy); p.rotate(-.28);
+        for (let k = 0; k < 5; k++) {
+          p.beginPath();
+          p.ellipse(0, 0, R * (1.55 + k * .12), R * (.36 + k * .03), 0, devant ? 0 : Math.PI, devant ? Math.PI : Math.PI * 2);
+          p.strokeStyle = `rgba(233,207,143,${[.55, .25, .45, .15, .3][k]})`; p.lineWidth = R * (k === 0 ? .05 : .03); p.stroke();
+        }
+        p.restore();
+      };
+      anneau(false);
+      const corps = p.createRadialGradient(cx - R * .4, cy - R * .5, R * .1, cx, cy, R);
+      corps.addColorStop(0, "#c9a2ff"); corps.addColorStop(.45, "#5b3fae"); corps.addColorStop(1, "#1a1040");
+      p.fillStyle = corps; p.beginPath(); p.arc(cx, cy, R, 0, 7); p.fill();
+      p.save(); p.beginPath(); p.arc(cx, cy, R, 0, 7); p.clip();
+      graine = 23;
+      for (let k = 0; k < 9; k++) {
+        p.fillStyle = `rgba(${alea() < .5 ? "255,255,255" : "40,20,90"},${.05 + alea() * .07})`;
+        p.fillRect(cx - R, cy - R + alea() * R * 2, R * 2, R * (.04 + alea() * .1));
+      }
+      const ombre = p.createRadialGradient(cx + R * .6, cy + R * .6, R * .2, cx + R * .3, cy + R * .3, R * 1.3);
+      ombre.addColorStop(0, "rgba(3,5,15,.85)"); ombre.addColorStop(1, "rgba(3,5,15,0)");
+      p.fillStyle = ombre; p.fillRect(cx - R, cy - R, R * 2, R * 2);
+      p.restore();
+      p.strokeStyle = "rgba(201,162,255,.5)"; p.lineWidth = 1.5; p.beginPath(); p.arc(cx, cy, R, Math.PI * .9, Math.PI * 1.6); p.stroke();
+      anneau(true);
+
+      graine = 41;
+      proches = Array.from({ length: Math.round(W * H / 9000) }, () => ({
+        x: alea() * W, y: alea() * H, z: .3 + alea() * 1.2, p: alea() * 6.28
+      }));
+    }
+
+    function dessinerRail(t) {
+      const [a, b, c, d] = rail();
+      // rail : halo + filet doré + traverses
+      ctx.save();
+      ctx.lineCap = "round";
+      [[14, "rgba(233,207,143,.06)"], [6, "rgba(233,207,143,.12)"], [1.6, "rgba(255,236,190,.75)"]].forEach(([l, c2]) => {
+        ctx.strokeStyle = c2; ctx.lineWidth = l;
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.bezierCurveTo(b[0], b[1], c[0], c[1], d[0], d[1]); ctx.stroke();
+      });
+      ctx.fillStyle = "rgba(255,236,190,.5)";
+      for (let k = 0; k <= 60; k++) {
+        const [x, y] = pointRail(k / 60);
+        ctx.beginPath(); ctx.arc(x, y, 1.2 + .8 * Math.sin(t * .003 - k * .5) ** 2, 0, 7); ctx.fill();
+      }
+      // le train : parcourt le rail en 18 s, puis 6 s de pause
+      const cycle = (t % 24000) / 18000;
+      if (cycle <= 1) {
+        const tt = cycle;
+        const voitures = 4;
+        // traînée lumineuse
+        for (let k = 0; k < 40; k++) {
+          const q = tt - k * .004; if (q < 0) break;
+          const [x, y] = pointRail(q);
+          ctx.fillStyle = `rgba(255,220,150,${.35 * (1 - k / 40)})`;
+          ctx.beginPath(); ctx.arc(x, y, 3.5 * (1 - k / 40), 0, 7); ctx.fill();
+        }
+        for (let v = 0; v < voitures; v++) {
+          const q = tt - .012 - v * .026;
+          if (q < 0) continue;
+          const [x, y] = pointRail(q);
+          const [x2, y2] = pointRail(Math.min(1, q + .002));
+          const ang = Math.atan2(y2 - y, x2 - x);
+          const echelle = Math.max(1.3, Math.min(W, H) / 420);
+          ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(echelle, echelle);
+          const l = v === 0 ? 30 : 24, h = 10;
+          ctx.fillStyle = v === 0 ? "#f3e2b3" : "#e2e6f5";
+          ctx.beginPath(); ctx.roundRect(-l / 2, -h - 1, l, h, v === 0 ? [3, 8, 3, 3] : 3); ctx.fill();
+          ctx.fillStyle = "#6b3a2c"; ctx.fillRect(-l / 2, -3.5, l, 2);
+          ctx.fillStyle = "rgba(255,210,120,.95)";
+          for (let w = -l / 2 + 4; w < l / 2 - 4; w += 6) ctx.fillRect(w, -h + 1.5, 3, 3);
+          if (v === 0) {
+            const phare = ctx.createRadialGradient(l / 2 + 2, -6, 0, l / 2 + 2, -6, 26);
+            phare.addColorStop(0, "rgba(255,240,200,.9)"); phare.addColorStop(1, "rgba(255,240,200,0)");
+            ctx.fillStyle = phare; ctx.beginPath(); ctx.arc(l / 2 + 2, -6, 26, 0, 7); ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+    }
+
+    function dessiner(t) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.drawImage(fond, 0, 0, W, H);
+      const defil = Math.min(window.scrollY || 0, 2000);
+      const R = Math.min(W, H) * .32;
+      ctx.drawImage(planete, -R * 1.6, H - R * 1.35 - defil * .12, planete.width / dpr, planete.height / dpr);
+      // étoiles proches : dérive vers la gauche, comme vues du train
+      for (const e of proches) {
+        if (!calme) { e.x -= e.z * .35; if (e.x < -10) { e.x = W + 10; e.y = Math.random() * H; } }
+        const a = .4 + .6 * (.5 + .5 * Math.sin(e.p + t * .0015 * e.z));
+        const y = e.y - defil * .05 * e.z;
+        ctx.fillStyle = `rgba(240,244,255,${a})`;
+        ctx.fillRect(e.x, ((y % H) + H) % H, e.z * 1.4, e.z * 1.4);
+        if (e.z > 1.3) { ctx.fillStyle = `rgba(240,244,255,${a * .25})`; ctx.fillRect(e.x, ((y % H) + H) % H + e.z * .5, e.z * 7, .6); }
+      }
+      dessinerRail(t);
+      // étoiles filantes
+      if (!calme && Math.random() < .006 && filantes.length < 2) filantes.push({ x: Math.random() * W, y: Math.random() * H * .4, v: 9 + Math.random() * 6, vie: 1 });
+      filantes = filantes.filter((f) => f.vie > 0);
+      for (const f of filantes) {
+        f.x -= f.v; f.y += f.v * .45; f.vie -= .025;
+        const g = ctx.createLinearGradient(f.x, f.y, f.x + 90, f.y - 40);
+        g.addColorStop(0, `rgba(255,245,220,${f.vie})`); g.addColorStop(1, "rgba(255,245,220,0)");
+        ctx.strokeStyle = g; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x + 90, f.y - 40); ctx.stroke();
+      }
+      const voile = ctx.createLinearGradient(0, 0, 0, H);
+      voile.addColorStop(0, "rgba(3,5,15,.2)"); voile.addColorStop(1, "rgba(3,5,15,.45)");
+      ctx.fillStyle = voile; ctx.fillRect(0, 0, W, H);
+    }
+
+    function boucle(t) {
+      if (!actif) return;
+      if (t - dernier > 33) { dessiner(t); dernier = t; }
+      raf = requestAnimationFrame(boucle);
+    }
+    function dimensionner() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      peindre(); dessiner(calme ? 3000 : performance.now());
+    }
+    let attente;
+    function allumer() {
+      if (!cv) {
+        cv = document.createElement("canvas");
+        cv.id = "decor-hsr"; cv.className = "decor"; cv.setAttribute("aria-hidden", "true");
+        document.body.prepend(cv);
+        ctx = cv.getContext("2d");
+        window.addEventListener("resize", () => { if (!actif) return; clearTimeout(attente); attente = setTimeout(dimensionner, 150); });
+        window.addEventListener("scroll", () => { if (actif && calme) dessiner(3000); }, { passive: true });
+        document.addEventListener("visibilitychange", () => { if (actif && !document.hidden && !calme) { cancelAnimationFrame(raf); raf = requestAnimationFrame(boucle); } });
+      }
+      if (actif) return;
+      actif = true; cv.hidden = false;
+      dimensionner();
+      if (!calme) raf = requestAnimationFrame(boucle);
+    }
+    function eteindre() { actif = false; cancelAnimationFrame(raf); if (cv) cv.hidden = true; }
     return { allumer, eteindre };
   })();
 
