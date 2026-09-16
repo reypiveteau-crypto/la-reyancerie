@@ -132,10 +132,34 @@ a.pouls-item:hover { border-color: var(--or); }
   border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
   transition: transform .2s;
 }
-.tuile-jeu::after {
-  content: ""; position: absolute; right: -30px; bottom: -30px; width: 120px; height: 120px; border-radius: 50%;
-  border: 14px solid color-mix(in srgb, var(--c) 35%, transparent);
+/* Emblème dessiné de chaque jeu */
+.tuile-jeu .tuile-embleme {
+  position: absolute; right: -6px; bottom: -10px; width: 118px; height: 118px; z-index: 0 !important;
+  color: var(--c); opacity: .62; overflow: visible;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c) 70%, transparent));
+  transition: transform .4s ease, opacity .3s;
 }
+.tuile-jeu.tuile-grande .tuile-embleme { width: 140px; height: 140px; right: -4px; bottom: -14px; }
+.tuile-jeu .tuile-nom, .tuile-jeu .tuile-chiffre, .tuile-jeu .tuile-stats { text-shadow: 0 1px 8px rgba(10, 6, 30, .9); }
+.tuile-jeu:hover .tuile-embleme { transform: scale(1.08) rotate(-4deg); opacity: 1; }
+.tuile-jeu .em-tourne { transform-origin: 50px 50px; transition: transform 1.2s ease; }
+.tuile-jeu:hover .em-tourne { transform: rotate(45deg); }
+.em-scintille { transform-origin: 82px 79.5px; animation: em-scintille 2.4s ease-in-out infinite; }
+@keyframes em-scintille { 50% { transform: scale(.4); opacity: .5; } }
+.em-onde1, .em-onde2 { animation: em-onde 3s ease-in-out infinite; }
+.em-onde2 { animation-delay: .5s; }
+@keyframes em-onde { 50% { opacity: .2; } }
+.em-neon { animation: em-neon 4s steps(1) infinite; }
+@keyframes em-neon { 0%, 100% { opacity: 1; } 92% { opacity: .35; } 94% { opacity: 1; } 96% { opacity: .5; } }
+.em-eclair { filter: drop-shadow(0 0 4px #ffe14d); }
+
+/* Texture de fond propre à chaque jeu */
+.tuile-jeu::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5; }
+.tuile-genshin::after { background: radial-gradient(1px 1px at 20% 30%, #fff 60%, transparent 61%), radial-gradient(1px 1px at 45% 70%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 70% 20%, #f5c86b 60%, transparent 61%), linear-gradient(135deg, transparent 60%, rgba(245, 200, 107, .12)); }
+.tuile-hsr::after { background: radial-gradient(1px 1px, rgba(255, 255, 255, .7) 50%, transparent 51%) 0 0 / 22px 22px, linear-gradient(135deg, transparent 55%, rgba(233, 207, 143, .12)); }
+.tuile-wuwa::after { background: linear-gradient(rgba(95, 224, 195, .12) 1px, transparent 1px) 0 0 / 16px 16px, linear-gradient(90deg, rgba(95, 224, 195, .12) 1px, transparent 1px) 0 0 / 16px 16px; }
+.tuile-nte::after { background: radial-gradient(rgba(255, 122, 160, .35) 1px, transparent 1.4px) 0 0 / 9px 9px; opacity: .45; }
+@media (prefers-reduced-motion: reduce) { .em-scintille, .em-onde1, .em-onde2, .em-neon { animation: none; } }
 .tuile-jeu:hover { transform: translateY(-3px); }
 .tuile-jeu > * { position: relative; z-index: 1; }
 .tuile-nom { font-family: var(--titre); font-size: 1.25rem; font-weight: 600; }
