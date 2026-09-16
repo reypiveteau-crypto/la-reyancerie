@@ -569,7 +569,7 @@
     <article class="fiche-perso" style="--el:${couleurPerso(g, p)}">
       <a class="lien" href="#/jeu/${g.slug}">← Tous les personnages ${esc(g.court)}</a>
       <header class="perso-tete">
-        <div class="perso-portrait"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}</div>
+        <div class="perso-portrait" data-rar="${p.rarete || ""}"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}</div>
         <div class="perso-id">
           <p class="surtitre">${esc(p.region || g.ui.theme)} · ${esc(g.nom)}</p>
           <h1>${esc(p.nom)}</h1>
@@ -876,6 +876,7 @@
     // Chaque jeu a son propre habillage (voir styles.css, [data-jeu="..."])
     if (themeCourant) document.documentElement.dataset.jeu = themeCourant;
     else delete document.documentElement.dataset.jeu;
+    if (themeCourant === "genshin") DecorGenshin.allumer(); else DecorGenshin.eteindre();
     document.getElementById("banniere-accueil").hidden = !(nom === "accueil" && banniereOK);
     document.title = CFG.NOM_SITE + (nom === "accueil" ? "" : " · " + (($app.querySelector("h1") || {}).textContent || ""));
     if (!rendre.memeEcran) window.scrollTo(0, 0);
@@ -1055,6 +1056,216 @@
     btn.disabled = false;
     if (f.dataset.form === "build") btn.textContent = "Publier le build";
   });
+
+  // ============================================================
+  //  DÉCOR ANIMÉ DE L'ESPACE GENSHIN — « Nuit sur Teyvat »
+  //  Ciel dégradé, lune, étoiles scintillantes et constellation,
+  //  voiles d'aurore, île céleste, trois chaînes de montagnes
+  //  (parallaxe au défilement) et lucioles aux couleurs des 7 éléments.
+  //  Tout est dessiné en code : aucune image à télécharger.
+  // ============================================================
+  const DecorGenshin = (() => {
+    let cv, ctx, W = 0, H = 0, dpr = 1, actif = false, raf = 0, dernier = 0;
+    let fondFixe, montagnes, etoiles = [], lucioles = [];
+    const calme = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const ELEM = ["#ff6b47", "#3db7e4", "#4dd8b0", "#b57bd4", "#9bd13b", "#7fdef0", "#e8b33c"];
+    let graine = 7;
+    const alea = () => ((graine = (graine * 16807) % 2147483647) - 1) / 2147483646;
+
+    function toile(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+
+    function peindreFond() {
+      fondFixe = toile(W * dpr, H * dpr);
+      const g = fondFixe.getContext("2d"); g.scale(dpr, dpr);
+      // ciel
+      const ciel = g.createLinearGradient(0, 0, 0, H);
+      ciel.addColorStop(0, "#070a22"); ciel.addColorStop(.45, "#141b48");
+      ciel.addColorStop(.75, "#2b2b63"); ciel.addColorStop(1, "#4a3a6e");
+      g.fillStyle = ciel; g.fillRect(0, 0, W, H);
+      // lueur chaude à l'horizon
+      const lueur = g.createRadialGradient(W * .35, H * 1.05, 0, W * .35, H * 1.05, H * .9);
+      lueur.addColorStop(0, "rgba(232,168,90,.35)"); lueur.addColorStop(1, "rgba(232,168,90,0)");
+      g.fillStyle = lueur; g.fillRect(0, 0, W, H);
+      // voie lactée
+      g.save(); g.translate(W * .5, H * .3); g.rotate(-.35);
+      const vl = g.createLinearGradient(0, -H * .12, 0, H * .12);
+      vl.addColorStop(0, "rgba(150,160,255,0)"); vl.addColorStop(.5, "rgba(190,185,255,.10)"); vl.addColorStop(1, "rgba(150,160,255,0)");
+      g.fillStyle = vl; g.fillRect(-W, -H * .12, W * 2, H * .24);
+      graine = 11;
+      for (let i = 0; i < 700; i++) {
+        const x = (alea() - .5) * W * 2, y = (alea() - .5) * (alea()) * H * .22;
+        g.fillStyle = `rgba(230,230,255,${alea() * .35})`; g.fillRect(x, y, 1, 1);
+      }
+      g.restore();
+      // lune et halo
+      const mx = W * .82, my = H * .17, mr = Math.max(26, Math.min(W, H) * .045);
+      const halo = g.createRadialGradient(mx, my, mr * .8, mx, my, mr * 6);
+      halo.addColorStop(0, "rgba(255,240,205,.35)"); halo.addColorStop(1, "rgba(255,240,205,0)");
+      g.fillStyle = halo; g.beginPath(); g.arc(mx, my, mr * 6, 0, 7); g.fill();
+      const lune = g.createRadialGradient(mx - mr * .3, my - mr * .3, mr * .1, mx, my, mr);
+      lune.addColorStop(0, "#fffaf0"); lune.addColorStop(1, "#e9dcc0");
+      g.fillStyle = lune; g.beginPath(); g.arc(mx, my, mr, 0, 7); g.fill();
+      g.fillStyle = "rgba(190,175,150,.25)";
+      [[-.3, -.1, .18], [.25, .2, .12], [.05, -.45, .09]].forEach(([a, b, r]) => { g.beginPath(); g.arc(mx + a * mr, my + b * mr, r * mr, 0, 7); g.fill(); });
+      // île céleste suspendue, avec sa lumière
+      const ix = W * .16, iy = H * .2, is = Math.min(W, H) * .07;
+      const li = g.createRadialGradient(ix, iy - is * .4, 0, ix, iy - is * .4, is * 2.2);
+      li.addColorStop(0, "rgba(255,226,150,.35)"); li.addColorStop(1, "rgba(255,226,150,0)");
+      g.fillStyle = li; g.beginPath(); g.arc(ix, iy - is * .4, is * 2.2, 0, 7); g.fill();
+      g.fillStyle = "#1a1d44";
+      g.beginPath(); g.moveTo(ix - is, iy);
+      g.quadraticCurveTo(ix - is * .5, iy + is * 1.4, ix, iy + is * 1.9);
+      g.quadraticCurveTo(ix + is * .5, iy + is * 1.3, ix + is, iy);
+      g.closePath(); g.fill();
+      g.fillRect(ix - is * .08, iy - is * .9, is * .16, is * .9);
+      g.beginPath(); g.moveTo(ix - is * .35, iy); g.lineTo(ix, iy - is * .35); g.lineTo(ix + is * .35, iy); g.fill();
+      g.fillStyle = "rgba(255,230,160,.95)"; g.beginPath(); g.arc(ix, iy - is * .95, is * .07, 0, 7); g.fill();
+      // constellation (esprit « constellations » du jeu)
+      const pts = [[.55, .09], [.6, .14], [.66, .12], [.7, .19], [.64, .24], [.58, .21]].map(([a, b]) => [a * W, b * H]);
+      g.strokeStyle = "rgba(211,188,142,.28)"; g.lineWidth = 1;
+      g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+      pts.forEach(([x, y]) => { g.fillStyle = "rgba(255,236,190,.9)"; g.beginPath(); g.arc(x, y, 1.8, 0, 7); g.fill(); g.strokeStyle = "rgba(211,188,142,.35)"; g.beginPath(); g.arc(x, y, 5, 0, 7); g.stroke(); });
+
+      // montagnes : trois plans générés
+      montagnes = [];
+      const plans = [
+        { base: .72, amp: .16, coul: ["#2a2c63", "#232553"], seed: 3 },
+        { base: .8, amp: .13, coul: ["#1c1e48", "#16183a"], seed: 5 },
+        { base: .9, amp: .1, coul: ["#10122c", "#0b0c20"], seed: 9 }
+      ];
+      plans.forEach((pl, n) => {
+        const hauteur = H * 1.25;
+        const c = toile(W * dpr, hauteur * dpr); const m = c.getContext("2d"); m.scale(dpr, dpr);
+        graine = pl.seed;
+        const pics = []; let x = -40;
+        while (x < W + 80) { pics.push([x, H * (pl.base - alea() * pl.amp)]); x += 60 + alea() * 140; }
+        const grad = m.createLinearGradient(0, H * (pl.base - pl.amp), 0, hauteur);
+        grad.addColorStop(0, pl.coul[0]); grad.addColorStop(1, pl.coul[1]);
+        m.fillStyle = grad; m.beginPath(); m.moveTo(-40, hauteur);
+        pics.forEach(([px, py], i) => {
+          if (!i) { m.lineTo(px, py); return; }
+          const [qx, qy] = pics[i - 1];
+          m.lineTo((qx + px) / 2, Math.max(qy, py) + 18 + alea() * 20); m.lineTo(px, py);
+        });
+        m.lineTo(W + 80, hauteur); m.closePath(); m.fill();
+        // liseré de lune sur les crêtes
+        m.strokeStyle = `rgba(200,200,255,${.12 - n * .03})`; m.lineWidth = 1.2; m.stroke();
+        // brume au pied de chaque plan
+        const br = m.createLinearGradient(0, H * pl.base, 0, H * (pl.base + .12));
+        br.addColorStop(0, "rgba(120,110,190,0)"); br.addColorStop(1, `rgba(120,110,190,${.18 - n * .04})`);
+        m.fillStyle = br; m.fillRect(0, H * pl.base, W, H * .3);
+        // quelques fenêtres éclairées sur le plan du milieu (village lointain)
+        if (n === 1) {
+          graine = 21;
+          for (let k = 0; k < 14; k++) {
+            const [px, py] = pics[Math.floor(alea() * pics.length)];
+            m.fillStyle = `rgba(255,200,120,${.5 + alea() * .4})`;
+            m.fillRect(px + (alea() - .5) * 30, py + 30 + alea() * 40, 2, 2);
+          }
+        }
+        montagnes.push({ c, vitesse: .06 + n * .07 });
+      });
+
+      // étoiles animées
+      graine = 99;
+      etoiles = Array.from({ length: Math.round(W * H / 5200) }, () => ({
+        x: alea() * W, y: alea() * H * .7, r: alea() * 1.3 + .2,
+        p: alea() * 6.28, v: .6 + alea() * 1.8, croix: alea() < .06
+      }));
+      lucioles = Array.from({ length: Math.min(70, Math.round(W / 22)) }, () => nouvelleLuciole(true));
+    }
+
+    function nouvelleLuciole(partout) {
+      return {
+        x: Math.random() * W, y: partout ? H * (.45 + Math.random() * .55) : H + 10,
+        r: 1 + Math.random() * 2.2, c: ELEM[Math.floor(Math.random() * ELEM.length)],
+        vy: .15 + Math.random() * .35, ph: Math.random() * 6.28, vie: 1
+      };
+    }
+
+    function aurore(t) {
+      const bandes = [["rgba(77,216,176,", .23, .09], ["rgba(181,123,212,", .3, .07], ["rgba(61,183,228,", .36, .05]];
+      bandes.forEach(([coul, yb, a], i) => {
+        const g = ctx.createLinearGradient(0, H * (yb - .08), 0, H * (yb + .1));
+        g.addColorStop(0, coul + "0)"); g.addColorStop(.5, coul + a + ")"); g.addColorStop(1, coul + "0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, H * (yb + .1));
+        for (let x = 0; x <= W; x += 24) ctx.lineTo(x, H * yb + Math.sin(x * .004 + t * .00012 * (i + 1) + i) * H * .04 + Math.sin(x * .011 + t * .0002) * H * .012);
+        ctx.lineTo(W, H * (yb + .1)); ctx.closePath(); ctx.fill();
+      });
+    }
+
+    function dessiner(t) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.drawImage(fondFixe, 0, 0, W, H);
+      aurore(t);
+      for (const e of etoiles) {
+        const a = .35 + .65 * (.5 + .5 * Math.sin(e.p + t * .001 * e.v));
+        ctx.fillStyle = `rgba(255,248,230,${a})`;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, 7); ctx.fill();
+        if (e.croix) {
+          ctx.strokeStyle = `rgba(255,240,200,${a * .7})`; ctx.lineWidth = .8;
+          const l = 5 + a * 5;
+          ctx.beginPath(); ctx.moveTo(e.x - l, e.y); ctx.lineTo(e.x + l, e.y); ctx.moveTo(e.x, e.y - l); ctx.lineTo(e.x, e.y + l); ctx.stroke();
+        }
+      }
+      const defil = Math.min(window.scrollY || 0, 1500);
+      montagnes.forEach((m) => ctx.drawImage(m.c, 0, -defil * m.vitesse, W, m.c.height / dpr));
+      ctx.globalCompositeOperation = "lighter";
+      for (const l of lucioles) {
+        l.y -= calme ? 0 : l.vy; l.x += Math.sin(t * .0008 + l.ph) * .3;
+        const clign = .45 + .55 * Math.sin(t * .002 + l.ph);
+        if (l.y < H * .35) l.vie -= .01;
+        if (l.vie <= 0) Object.assign(l, nouvelleLuciole(false));
+        const a = Math.max(0, clign * l.vie);
+        const g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 6);
+        g.addColorStop(0, l.c); g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalAlpha = a * .8; ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(l.x, l.y, l.r * 6, 0, 7); ctx.fill();
+        ctx.globalAlpha = a; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(l.x, l.y, l.r * .5, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+      // voile sombre pour garder le texte lisible
+      const voile = ctx.createLinearGradient(0, 0, 0, H);
+      voile.addColorStop(0, "rgba(10,12,30,.25)"); voile.addColorStop(1, "rgba(10,12,30,.45)");
+      ctx.fillStyle = voile; ctx.fillRect(0, 0, W, H);
+    }
+
+    function boucle(t) {
+      if (!actif) return;
+      if (t - dernier > 33) { dessiner(t); dernier = t; } // ~30 images/s
+      raf = requestAnimationFrame(boucle);
+    }
+
+    function dimensionner() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      peindreFond();
+      dessiner(performance.now());
+    }
+
+    let attente;
+    function allumer() {
+      if (!cv) {
+        cv = document.createElement("canvas");
+        cv.id = "decor-genshin"; cv.setAttribute("aria-hidden", "true");
+        document.body.prepend(cv);
+        ctx = cv.getContext("2d");
+        window.addEventListener("resize", () => { if (!actif) return; clearTimeout(attente); attente = setTimeout(dimensionner, 150); });
+        window.addEventListener("scroll", () => { if (actif && calme) dessiner(performance.now()); }, { passive: true });
+        document.addEventListener("visibilitychange", () => { if (actif && !document.hidden && !calme) { cancelAnimationFrame(raf); raf = requestAnimationFrame(boucle); } });
+      }
+      if (actif) return;
+      actif = true; cv.hidden = false;
+      dimensionner();
+      if (!calme) raf = requestAnimationFrame(boucle);
+    }
+    function eteindre() {
+      actif = false; cancelAnimationFrame(raf);
+      if (cv) cv.hidden = true;
+    }
+    return { allumer, eteindre };
+  })();
 
   // ---------- démarrage
   async function demarrer() {
