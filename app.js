@@ -14,6 +14,7 @@
   const jeu = (slug) => JEUX.find((g) => g.slug === slug);
   const G = window.REY_GENSHIN;
   const TYPES_POST = window.REY_TYPES_POST;
+  const TITRE_ACCUEIL = document.title || "La Reyancerie";
   const IMGS = window.REY_IMAGES || {}; // images embarquées (aperçu uniquement)
   const EXT = [".png", ".jpg", ".jpeg", ".webp"];
   const slugNom = (nom) => String(nom).toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae")
@@ -941,7 +942,8 @@
     // hors des espaces jeux : décor animé de la plateforme
     if (!themeCourant) { document.documentElement.dataset.decor = "accueil"; DecorAccueil.allumer(); }
     else { delete document.documentElement.dataset.decor; DecorAccueil.eteindre(); }
-    document.title = CFG.NOM_SITE + (nom === "accueil" ? "" : " · " + (($app.querySelector("h1") || {}).textContent || ""));
+    // sur l'accueil : le titre écrit dans index.html ; ailleurs : nom du site · titre de la page
+    document.title = nom === "accueil" ? TITRE_ACCUEIL : CFG.NOM_SITE + " · " + (($app.querySelector("h1") || {}).textContent || "");
     if (!rendre.memeEcran) window.scrollTo(0, 0);
     rendre.memeEcran = false;
   }
