@@ -254,15 +254,6 @@
       ${ME ? `<p class="bienvenue">Content de te revoir, <b>${esc(ME.username)}</b></p>` : `<button class="btn btn-discord" data-action="login">Se connecter avec Discord</button>`}
     </section>
 
-    <section class="compteurs-accueil" aria-label="La communauté en chiffres">
-      ${[
-        ["membres", nbMembres, "Membres", "M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 10a9 9 0 0 1 18 0Z"],
-        ["builds", builds.length, "Builds partagés", "M4 4h10l6 6v10H4Zm9 1v6h6"],
-        ["souvenirs", mems.length, "Souvenirs & créations", "M3 5h18v14H3Zm2 12h14l-4.5-6-3.5 4.5-2.5-3Z"],
-        ["persos", nbPersos, "Personnages répertoriés", "M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1Z"]
-      ].map(([k, n, l, d], i) => `<div class="compteur-c" style="--i:${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor"/></svg><b data-compte="${n}">${n}</b><span>${l}</span></div>`).join("")}
-    </section>
-
     <section class="bloc">
       <div class="bloc-tete"><h2>${ME ? "Tes jeux" : "Les jeux"}</h2><a href="#/jeux" class="lien">Tous les jeux →</a></div>
       <div class="grille grille-jeux">
@@ -278,6 +269,15 @@
     <section class="bloc">
       <div class="bloc-tete"><h2>Souvenirs et créations récents</h2><a href="#/memoire" class="lien">Toute la mémoire →</a></div>
       <div class="grille">${mems.slice(0, 3).map((m) => carteSouvenir(m, auteurs)).join("") || vide("Aucun souvenir pour l'instant.")}</div>
+    </section>
+
+    <section class="compteurs-accueil" aria-label="La communauté en chiffres">
+      ${[
+        ["membres", nbMembres, "Membres", "M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 10a9 9 0 0 1 18 0Z"],
+        ["builds", builds.length, "Builds partagés", "M4 4h10l6 6v10H4Zm9 1v6h6"],
+        ["souvenirs", mems.length, "Souvenirs & créations", "M3 5h18v14H3Zm2 12h14l-4.5-6-3.5 4.5-2.5-3Z"],
+        ["persos", nbPersos, "Personnages répertoriés", "M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1Z"]
+      ].map(([k, n, l, d], i) => `<div class="compteur-c" style="--i:${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor"/></svg><b data-compte="${n}">${n}</b><span>${l}</span></div>`).join("")}
     </section>` };
   };
 
@@ -504,12 +504,15 @@
 
   function cartePerso(g, p, n) {
     const src = srcPortrait(g, p);
+    // « Dan Heng • Imbibitor Lunae » : la variante passe sur une 2e ligne, plus petite
+    const [base, ...reste] = p.nom.split(" • ");
+    const variante = reste.join(" • ");
     return `<a class="perso" data-tilt title="${esc(p.nom)}" href="#/jeu/${g.slug}/${esc(p.id)}" data-el="${esc(p.element)}" data-arme="${esc(p.arme)}" data-rar="${p.rarete || ""}" data-nom="${esc(slugNom(p.nom))}" style="--el:${couleurPerso(g, p)}">
       <span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>
       ${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-repli="cacher">` : ""}
       <span class="perso-el" title="${esc(p.element)}">${iconeEl(g, p.element, 15)}</span>
       ${n ? `<span class="perso-compte" title="${n} publication${n > 1 ? "s" : ""} de la communauté">${n}</span>` : ""}
-      <span class="perso-bas"><span class="perso-nom">${esc(p.nom)}</span>${etoiles(g, p.rarete)}</span>
+      <span class="perso-bas"><span class="perso-nom">${esc(base)}${variante ? `<small class="perso-variante">${esc(variante)}</small>` : ""}</span>${etoiles(g, p.rarete)}</span>
       <span class="reflet" aria-hidden="true"></span>
     </a>`;
   }
@@ -621,7 +624,7 @@
     <article class="fiche-perso" style="--el:${couleurPerso(g, p)}">
       <a class="lien" href="#/jeu/${g.slug}">← Tous les personnages ${esc(g.court)}</a>
       <header class="perso-tete">
-        <div class="portrait-zone"><span class="aura" aria-hidden="true"></span><div class="perso-portrait" data-tilt data-rar="${p.rarete || ""}"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}<span class="reflet" aria-hidden="true"></span></div></div>
+        <div class="portrait-zone"><span class="aura" aria-hidden="true"></span><div class="perso-portrait" data-tilt data-rar="${p.rarete || ""}"><span class="perso-initiale" aria-hidden="true">${esc(p.nom[0])}</span>${src ? `<img src="${esc(src)}" alt="Portrait de ${esc(p.nom)}" data-repli="cacher">` : ""}<span class="reflet" aria-hidden="true"></span><span class="portrait-deco" aria-hidden="true"></span><span class="portrait-legende" aria-hidden="true"><b>${esc(p.nom)}</b><small>${esc(p.element)} · ${esc(p.arme)}</small></span></div></div>
         <div class="perso-id">
           <p class="surtitre">${esc(p.region || g.ui.theme)} · ${esc(g.nom)}</p>
           <h1>${esc(p.nom)}</h1>
