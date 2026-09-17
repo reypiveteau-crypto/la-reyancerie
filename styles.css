@@ -1294,3 +1294,33 @@ img[data-zoom] { cursor: zoom-in; }
   [data-jeu="genshin"] .perso-nom { font-size: .72rem; line-height: 1.15; }
   [data-jeu="genshin"] .perso-bas { height: auto; }
 }
+
+/* ---------- WuWa : l'image s'arrête au-dessus du panneau d'infos (rien ne couvre le visage) */
+[data-jeu="wuwa"] .perso img { height: calc(100% - 58px); object-position: 50% 12%; }
+[data-jeu="wuwa"] .perso-initiale { bottom: 58px; }
+[data-jeu="wuwa"] .perso-bas {
+  height: 58px; padding: 6px 10px 6px; align-content: center; gap: 1px;
+  background: #07100f; border-top: 1px solid color-mix(in srgb, var(--el) 55%, transparent);
+}
+[data-jeu="wuwa"] .perso-compte { bottom: 64px; }
+@media (max-width: 720px) {
+  [data-jeu="wuwa"] .perso img { height: calc(100% - 60px); }
+  [data-jeu="wuwa"] .perso-initiale { bottom: 60px; }
+  [data-jeu="wuwa"] .perso-bas { height: 60px; padding: 4px 6px 5px 8px; }
+  [data-jeu="wuwa"] .perso-bas::before { font-size: .52rem; }
+  [data-jeu="wuwa"] .perso .etoiles { font-size: .58rem; }
+  [data-jeu="wuwa"] .perso-compte { bottom: 66px; }
+}
+[data-jeu="wuwa"] .perso-bas { padding-left: 18px; }
+@media (max-width: 720px) { [data-jeu="wuwa"] .perso-bas { padding-left: 15px; } }
+/* WuWa : carte en colonne — image en haut, panneau d'infos en bas (sa hauteur s'adapte au nom) */
+[data-jeu="wuwa"] .grille-persos .perso { display: flex; flex-direction: column; aspect-ratio: 3 / 4; }
+[data-jeu="wuwa"] .perso img { position: relative; inset: auto; width: 100%; height: auto; flex: 1 1 0; min-height: 0; }
+[data-jeu="wuwa"] .perso-bas { position: relative; inset: auto; height: auto; min-height: 58px; flex: none; margin-top: auto; }
+[data-jeu="wuwa"] .perso-compte { top: 26px; right: 6px; bottom: auto; }
+[data-jeu="wuwa"] .perso-nom { font-size: .8rem; }
+@media (max-width: 720px) {
+  [data-jeu="wuwa"] .perso-bas { height: auto; min-height: 54px; }
+  [data-jeu="wuwa"] .perso-compte { top: 24px; bottom: auto; }
+  [data-jeu="wuwa"] .perso-nom { font-size: .66rem; }
+}
