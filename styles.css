@@ -902,7 +902,7 @@ img[data-zoom] { cursor: zoom-in; }
 [data-jeu="wuwa"] .perso::before { top: 5px; right: 5px; border-left: 0; border-bottom: 0; }
 [data-jeu="wuwa"] .perso::after { bottom: 5px; left: 5px; border-right: 0; border-top: 0; }
 [data-jeu="wuwa"] .perso:hover { transform: none; border-color: var(--el); box-shadow: inset 0 0 24px color-mix(in srgb, var(--el) 30%, transparent); }
-[data-jeu="wuwa"] .perso img { filter: saturate(.85) contrast(1.05); }
+[data-jeu="wuwa"] .perso img { filter: none; }
 [data-jeu="wuwa"] .perso-bas {
   justify-items: start; text-align: left; padding: 22px 10px 8px;
   background: linear-gradient(transparent, rgba(5, 9, 8, .96) 50%);
@@ -1036,8 +1036,8 @@ img[data-zoom] { cursor: zoom-in; }
 @keyframes carte-in { from { opacity: 0; transform: translateY(14px) scale(.94); } }
 
 /* inclinaison 3D + reflet qui suit la souris */
-[data-tilt] { transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .3s, border-color .3s; transform-style: preserve-3d; will-change: transform; }
-[data-tilt].incline { transition: transform .08s linear, box-shadow .3s, border-color .3s; }
+[data-tilt] { transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .3s, border-color .3s; }
+[data-tilt].incline { transition: transform .08s linear, box-shadow .3s, border-color .3s; transform-style: preserve-3d; will-change: transform; }
 .reflet {
   position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .3s;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, .35), transparent 45%);
@@ -1324,3 +1324,6 @@ img[data-zoom] { cursor: zoom-in; }
   [data-jeu="wuwa"] .perso-compte { top: 24px; bottom: auto; }
   [data-jeu="wuwa"] .perso-nom { font-size: .66rem; }
 }
+
+/* images des cartes : rendu net (pas de calque 3D permanent qui les adoucit) */
+.perso img, .perso-portrait img { image-rendering: auto; backface-visibility: hidden; }
