@@ -814,7 +814,7 @@ img[data-zoom] { cursor: zoom-in; }
   background: rgba(5, 8, 26, .9);
   border-top: 2px dashed rgba(233, 207, 143, .55);
 }
-[data-jeu="hsr"] .perso-nom { font-family: var(--titre); text-transform: uppercase; letter-spacing: .05em; font-size: .74rem; line-height: 1.1; font-weight: 700; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+[data-jeu="hsr"] .perso-nom { font-family: var(--titre); text-transform: uppercase; letter-spacing: .04em; font-size: .72rem; line-height: 1.2; font-weight: 700; }
 [data-jeu="hsr"] .perso .etoiles { font-size: .6rem; letter-spacing: 2px; line-height: 1.2; }
 [data-jeu="hsr"] .perso-el {
   top: 9px; left: 9px; width: 24px; height: 24px; border-radius: 4px; transform: rotate(45deg);
@@ -1149,3 +1149,148 @@ img[data-zoom] { cursor: zoom-in; }
 .tuile-jeu:hover .tuile-fond { transform: scale(1.06); }
 .tuile-jeu .tuile-nom, .tuile-jeu .tuile-chiffre, .tuile-jeu .tuile-stats { position: relative; z-index: 2; }
 .tuile-jeu .reflet { z-index: 3; }
+
+/* ============================================================
+   PORTRAITS : cadrage des visages + grande image par jeu
+   ============================================================ */
+.portrait-deco, .portrait-legende { display: none; }
+
+/* Genshin : l'image s'arrête au-dessus du bandeau crème (plus rien ne couvre le visage) */
+[data-jeu="genshin"] .perso img { height: calc(100% - 30px); }
+[data-jeu="genshin"] .perso-bas { min-height: 30px; align-content: center; }
+[data-jeu="genshin"] .perso-initiale { bottom: 30px; }
+
+/* NTE : le rang passe en pastille dans le coin, le ruban reste en bas */
+[data-jeu="nte"] .perso-bas { top: 0; padding: 0 4px 8px; align-content: end; }
+[data-jeu="nte"] .perso .etoiles { position: absolute; top: 8px; right: 8px; margin: 0; padding: 1px 8px; border: 2px solid #fff3fb; }
+[data-jeu="nte"] .perso-compte { top: auto; bottom: 38px; right: 6px; z-index: 2; }
+
+/* Téléphone : cartes plus hautes, cadrage sur le haut du corps */
+@media (max-width: 720px) {
+  .grille-persos .perso { aspect-ratio: 3 / 4; }
+  .perso img { object-position: 50% 12%; }
+  [data-jeu="genshin"] .perso img { height: calc(100% - 26px); }
+  [data-jeu="genshin"] .perso-bas { min-height: 26px; padding: 3px 4px; }
+  [data-jeu="genshin"] .perso .etoiles { top: -15px; font-size: .62rem; }
+  [data-jeu="hsr"] .perso-bas { top: 78%; }
+  [data-jeu="hsr"] .perso { -webkit-mask:
+    radial-gradient(circle 6px at 0 78%, transparent 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 6px at 100% 78%, transparent 98%, #000) right / 51% 100% no-repeat; }
+  [data-jeu="nte"] .perso-nom { font-size: .62rem; padding: 2px 7px; }
+  [data-jeu="nte"] .perso .etoiles { top: 6px; right: 6px; font-size: .62rem; padding: 0 6px; }
+  [data-jeu="nte"] .perso-el { width: 22px; height: 22px; top: 6px; left: 6px; }
+  .perso-portrait img { object-position: 50% 10%; }
+}
+
+/* ---------- HSR : billet vertical à droite, bande holographique */
+[data-jeu="hsr"] .perso-tete { grid-template-columns: 1fr minmax(0, 320px); }
+[data-jeu="hsr"] .portrait-zone { order: 2; }
+[data-jeu="hsr"] .perso-portrait { aspect-ratio: 3 / 4; border-radius: 12px; }
+[data-jeu="hsr"] .perso-portrait img { height: 84%; object-position: 50% 8%; }
+[data-jeu="hsr"] .portrait-zone .aura { border-radius: 30%; opacity: .6; inset: -24px 0 -24px -24px; animation: none; }
+[data-jeu="hsr"] .portrait-legende {
+  display: grid; position: absolute; left: 0; right: 0; bottom: 0; height: 16%; z-index: 4;
+  place-content: center; text-align: center; gap: 1px; pointer-events: none;
+  background: rgba(5, 8, 26, .94); border-top: 2px dashed rgba(233, 207, 143, .6); border-radius: 0 0 12px 12px;
+}
+[data-jeu="hsr"] .portrait-legende b { font: 700 1rem var(--titre); letter-spacing: .14em; text-transform: uppercase; color: #f3e2b3; }
+[data-jeu="hsr"] .portrait-legende small { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: #c3aefc; }
+[data-jeu="hsr"] .portrait-deco {
+  display: block; position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 12px;
+  background: linear-gradient(115deg, transparent 35%, rgba(195, 174, 252, .28) 47%, rgba(233, 207, 143, .3) 53%, transparent 65%) 0 0 / 300% 100%;
+  animation: holo 5s ease-in-out infinite; mix-blend-mode: screen;
+}
+@keyframes holo { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0 0; } }
+
+/* ---------- WuWa : grande bannière d'archive sur toute la largeur */
+[data-jeu="wuwa"] .perso-tete { grid-template-columns: 1fr; gap: 22px; }
+[data-jeu="wuwa"] .portrait-zone { max-width: none; }
+[data-jeu="wuwa"] .portrait-zone .aura { display: none; }
+[data-jeu="wuwa"] .perso-portrait { aspect-ratio: 21 / 9; transform: none !important; background: linear-gradient(90deg, #050908, color-mix(in srgb, var(--el) 35%, #0a1312)); }
+[data-jeu="wuwa"] .perso-portrait img { left: 35%; width: 65%; object-position: 50% 15%; -webkit-mask: linear-gradient(90deg, transparent, #000 30%); mask: linear-gradient(90deg, transparent, #000 30%); }
+[data-jeu="wuwa"] .perso-portrait .perso-initiale { left: 35%; }
+[data-jeu="wuwa"] .perso-portrait::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(62, 230, 193, .05) 0 1px, transparent 1px 4px), linear-gradient(transparent 55%, rgba(5, 9, 8, .85));
+}
+[data-jeu="wuwa"] .portrait-deco {
+  display: block; position: absolute; inset: 14px; z-index: 3; pointer-events: none;
+  background:
+    linear-gradient(var(--el), var(--el)) 0 0 / 26px 2px, linear-gradient(var(--el), var(--el)) 0 0 / 2px 26px,
+    linear-gradient(var(--el), var(--el)) 100% 0 / 26px 2px, linear-gradient(var(--el), var(--el)) 100% 0 / 2px 26px,
+    linear-gradient(var(--el), var(--el)) 0 100% / 26px 2px, linear-gradient(var(--el), var(--el)) 0 100% / 2px 26px;
+  background-repeat: no-repeat;
+}
+[data-jeu="wuwa"] .portrait-deco::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--el), transparent); animation: balayage 3.5s linear infinite;
+}
+@keyframes balayage { from { top: 0; opacity: 0; } 10%, 90% { opacity: 1; } to { top: 100%; opacity: 0; } }
+[data-jeu="wuwa"] .portrait-legende {
+  display: grid; position: absolute; left: 34px; bottom: 30px; z-index: 4; gap: 4px; max-width: 45%; pointer-events: none;
+}
+[data-jeu="wuwa"] .portrait-legende::before { content: "// FICHE RÉSONATEUR"; font: 600 .7rem var(--titre); letter-spacing: .3em; color: var(--el); }
+[data-jeu="wuwa"] .portrait-legende b { font: 700 clamp(1.6rem, 4vw, 3rem)/1 var(--titre); letter-spacing: .1em; text-transform: uppercase; color: #e6fffa; }
+[data-jeu="wuwa"] .portrait-legende small { font: 600 .8rem var(--titre); letter-spacing: .2em; text-transform: uppercase; color: var(--faible); }
+[data-jeu="wuwa"] .perso-id h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- NTE : polaroid penché avec ruban adhésif */
+[data-jeu="nte"] .perso-portrait {
+  aspect-ratio: 4 / 5; border-radius: 6px; border: 0; background: #fff3fb; padding: 0;
+  box-shadow: 10px 10px 0 var(--el), 0 20px 40px -20px #000; transform: none; overflow: visible;
+}
+[data-jeu="nte"] .perso-portrait img, [data-jeu="nte"] .perso-portrait .perso-initiale {
+  inset: 12px 12px auto 12px; width: calc(100% - 24px); height: calc(100% - 70px);
+  border-radius: 2px; object-position: 50% 10%;
+}
+[data-jeu="nte"] .perso-portrait .perso-initiale { background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--el) 70%, #1f1029), #1f1029 80%); }
+[data-jeu="nte"] .portrait-zone { transform: rotate(-3deg); }
+[data-jeu="nte"] .portrait-zone .aura { border-radius: 40%; }
+[data-jeu="nte"] .portrait-legende {
+  display: grid; position: absolute; left: 12px; right: 12px; bottom: 8px; height: 50px; z-index: 4;
+  place-content: center; text-align: center; pointer-events: none; color: #1a0a12;
+}
+[data-jeu="nte"] .portrait-legende b { font: 800 1.1rem var(--titre); text-transform: uppercase; transform: rotate(-2deg); }
+[data-jeu="nte"] .portrait-legende small { font-size: .7rem; font-weight: 700; color: #7a3d6a; }
+[data-jeu="nte"] .perso-portrait .reflet { display: none; }
+[data-jeu="nte"] .portrait-deco {
+  display: block; position: absolute; top: -12px; left: 50%; width: 110px; height: 30px; z-index: 5; pointer-events: none;
+  transform: translateX(-50%) rotate(4deg); background: rgba(255, 225, 77, .88); box-shadow: 2px 2px 0 rgba(0, 0, 0, .25);
+}
+
+@media (max-width: 720px) {
+  [data-jeu="hsr"] .perso-tete { grid-template-columns: 1fr; }
+  [data-jeu="hsr"] .portrait-zone { order: 0; max-width: 270px; margin-inline: auto; width: 100%; }
+  [data-jeu="nte"] .portrait-zone { max-width: 260px; margin-inline: auto; width: 100%; }
+  [data-jeu="genshin"] .portrait-zone { max-width: 280px; margin-inline: auto; width: 100%; }
+  [data-jeu="wuwa"] .portrait-zone { max-width: none; width: 100%; }
+  .perso-tete { overflow-x: clip; padding-block: 16px; }
+  .portrait-zone .aura { inset: -14px; }
+  .perso-tete .perso-portrait { max-width: none; }
+  [data-jeu="wuwa"] .perso-portrait { aspect-ratio: 4 / 5; }
+  [data-jeu="wuwa"] .perso-portrait img { left: 0; width: 100%; -webkit-mask: linear-gradient(180deg, #000 55%, transparent 92%); mask: linear-gradient(180deg, #000 55%, transparent 92%); object-position: 50% 8%; }
+  [data-jeu="wuwa"] .perso-portrait .perso-initiale { left: 0; }
+  [data-jeu="wuwa"] .portrait-legende { left: 22px; right: 22px; bottom: 24px; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .portrait-deco, .portrait-deco::after { animation: none !important; } }
+
+/* compteurs : tout en bas de l'accueil */
+.compteurs-accueil { margin-top: 12px; }
+
+/* ---------- noms toujours entiers sur les cartes */
+.perso-nom { max-width: 100%; overflow-wrap: break-word; hyphens: auto; }
+.perso-variante { display: block; font-size: .78em; font-weight: 600; opacity: .85; letter-spacing: 0; text-transform: none; line-height: 1.15; }
+[data-jeu="hsr"] .perso { -webkit-mask: none; mask: none; }
+[data-jeu="hsr"] .perso-bas { top: auto; min-height: 28%; padding: 5px 5px 4px; }
+[data-jeu="hsr"] .perso-initiale { padding-bottom: 25%; }
+[data-jeu="wuwa"] .perso-nom { font-size: .86rem; letter-spacing: .05em; line-height: 1.15; }
+[data-jeu="nte"] .perso-nom { max-width: 92%; line-height: 1.2; }
+@media (max-width: 720px) {
+  [data-jeu="hsr"] .perso-bas { top: auto; min-height: 24%; padding: 4px 3px 3px; }
+  [data-jeu="hsr"] .perso-nom { font-size: .6rem; letter-spacing: .02em; }
+  [data-jeu="hsr"] .perso .etoiles { font-size: .5rem; letter-spacing: 1px; }
+  [data-jeu="wuwa"] .perso-nom { font-size: .68rem; letter-spacing: .02em; }
+  [data-jeu="wuwa"] .perso-bas { padding: 18px 6px 7px; }
+  [data-jeu="genshin"] .perso-nom { font-size: .72rem; line-height: 1.15; }
+  [data-jeu="genshin"] .perso-bas { height: auto; }
+}
