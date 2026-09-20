@@ -1325,3 +1325,20 @@ img[data-zoom] { cursor: zoom-in; }
 
 /* images des cartes : rendu net (pas de calque 3D permanent qui les adoucit) */
 .perso img, .perso-portrait img { image-rendering: auto; backface-visibility: hidden; }
+
+/* WuWa : le panneau d'infos devient translucide — l'image continue derrière, en bas de la carte */
+[data-jeu="wuwa"] .grille-persos .perso { display: block; }
+[data-jeu="wuwa"] .perso img { position: absolute; inset: 0; width: 100%; height: 100%; object-position: 50% 12%; }
+[data-jeu="wuwa"] .perso-initiale { inset: 0; bottom: 54px; }
+[data-jeu="wuwa"] .perso-bas {
+  position: absolute; left: 0; right: 0; bottom: 0; top: auto; margin: 0; height: auto; min-height: 52px;
+  background: linear-gradient(rgba(5, 16, 15, 0), rgba(5, 16, 15, .72) 42%, rgba(5, 16, 15, .93));
+  border-top: 0; padding: 20px 10px 8px 18px;
+}
+[data-jeu="wuwa"] .perso-bas::before { text-shadow: 0 1px 3px #000; }
+[data-jeu="wuwa"] .perso-nom, [data-jeu="wuwa"] .perso .etoiles { text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+[data-jeu="wuwa"] .perso-compte { top: 26px; right: 6px; bottom: auto; }
+@media (max-width: 720px) {
+  [data-jeu="wuwa"] .perso-bas { min-height: 48px; padding: 16px 6px 6px 15px; }
+  [data-jeu="wuwa"] .perso-initiale { bottom: 48px; }
+}
