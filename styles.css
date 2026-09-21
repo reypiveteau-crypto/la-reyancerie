@@ -1342,3 +1342,16 @@ img[data-zoom] { cursor: zoom-in; }
   [data-jeu="wuwa"] .perso-bas { min-height: 48px; padding: 16px 6px 6px 15px; }
   [data-jeu="wuwa"] .perso-initiale { bottom: 48px; }
 }
+
+/* HSR : panneau du nom translucide — l'image continue derrière, en bas du billet */
+[data-jeu="hsr"] .perso img { height: 100%; object-position: 50% 12%; }
+[data-jeu="hsr"] .perso-bas {
+  background: linear-gradient(rgba(5, 8, 26, 0), rgba(5, 8, 26, .7) 40%, rgba(5, 8, 26, .92));
+  border-top: 0; padding-top: 18px;
+}
+[data-jeu="hsr"] .perso-bas::before {
+  content: ""; position: absolute; left: 8px; right: 8px; top: 8px;
+  border-top: 1px dashed rgba(233, 207, 143, .45);
+}
+[data-jeu="hsr"] .perso-nom, [data-jeu="hsr"] .perso .etoiles { text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+@media (max-width: 720px) { [data-jeu="hsr"] .perso-bas { padding-top: 14px; } [data-jeu="hsr"] .perso-bas::before { top: 6px; left: 5px; right: 5px; } }
