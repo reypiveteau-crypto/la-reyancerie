@@ -542,71 +542,17 @@
   }
 
   // ======== SECTION D'UN PERSONNAGE
-  const RANGS = ["Meilleur choix", "Bonne alternative", "Correct aussi", "Dépannage"];
-  const PAS_UN_SET = /^(ATQ|PV|DEF|Bonus\b|Maîtrise élémentaire|Recharge|Taux CRIT|DGT CRIT)/i;
-
-  function lireSet(txt) {
-    let corps = txt, note = null, pieces = null;
-    const par = corps.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-    if (par) {
-      corps = par[1];
-      const pm = par[2].match(/^(\d)\s*p(?:ièces?)?\s*(?:,\s*(.*))?$/i);
-      if (pm) { pieces = +pm[1]; note = pm[2] || null; } else note = par[2];
-    }
-    const morceaux = corps.split(/\s\+\s/).map((b) => {
-      const m = b.match(/^(\d)\s*p(?:ièces?)?\s+(.*)$/i);
-      return m ? { n: +m[1], nom: m[2] } : { n: pieces, nom: b };
-    });
-    return { morceaux, note };
-  }
-  const icone = (dossier, nom) => `<span class="icone"><img src="${esc(srcIcone(dossier, nom))}" alt="" loading="lazy" width="40" height="40" data-repli="vide"></span>`;
-
+  // Carte d'identité du personnage. Plus de build de référence : ce sont les builds
+  // des membres, juste en dessous, qui font foi — pareil pour les quatre jeux.
   function guideDe(g, p) {
-    const b = p.build;
-    if (!b) {
-      if (g.slug !== "genshin") {
-        return `<dl class="carte-identite">
-          <div><dt>${esc(g.ui.libelleElement)}</dt><dd><span class="meta-el">${iconeEl(g, p.element, 18)} ${esc(p.element)}</span></dd></div>
-          <div><dt>${esc(g.ui.libelleArme)}</dt><dd>${esc(p.arme || "—")}</dd></div>
-          <div><dt>Rareté</dt><dd>${p.rarete ? etoiles(g, p.rarete) : "Non confirmée"}</dd></div>
-          ${p.role ? `<div><dt>Rôle</dt><dd>${esc(p.role)}</dd></div>` : ""}
-        </dl>
-        <div class="vide"><p><b>Guide de référence à venir</b></p><p>Aucun guide n'est affiché tant qu'il n'a pas été vérifié. En attendant, les builds des membres juste en dessous sont la meilleure source.</p></div>`;
-      }
-      return `<div class="vide"><p><b>${p.note ? "Pourquoi pas de build ici" : "Build de référence en préparation"}</b></p><p>${esc(p.note || "Ce build n'a pas encore été vérifié : rien n'est affiché plutôt que quelque chose de faux. En attendant, regarde les builds des membres juste en dessous.")}</p></div>`;
-    }
-    const seq = (arr) => (arr || []).map((x, i) => `${i ? '<span class="seq-fleche">›</span>' : ""}<span class="seq-item">${esc(x)}</span>`).join("");
-    const ligneSet = (txt, i) => {
-      const { morceaux, note } = lireSet(txt);
-      return `<li class="${i === 0 ? "meilleur" : ""}"><span class="rang">${RANGS[Math.min(i, 3)]}</span>
-        <span class="set-ligne">${morceaux.map((m) => `<span class="set-bloc">${PAS_UN_SET.test(m.nom) ? "" : icone("artefacts", m.nom)}${m.n ? `<b class="pieces">${m.n}p</b>` : ""}<span>${esc(m.nom)}</span></span>`).join('<span class="seq-fleche">+</span>')}</span>
-        ${note ? `<small class="faible">${esc(note)}</small>` : ""}</li>`;
-    };
-    const equipier = (nom) => {
-      const q = persoDe(g.slug, nom);
-      const src = q ? srcPortrait(g, q) : "";
-      const contenu = `<span class="equipier-img" style="--el:${q ? couleurPerso(g, q) : g.couleur}"><span aria-hidden="true">${esc(nom[0])}</span>${src ? `<img src="${esc(src)}" alt="" loading="lazy" data-repli="cacher">` : ""}</span><span>${esc(nom)}</span>`;
-      if (q && q.id === p.id) return `<span class="equipier soi">${contenu}</span>`;
-      return q ? `<a class="equipier" href="#/jeu/${g.slug}/${esc(q.id)}">${contenu}</a>` : `<span class="equipier">${contenu}</span>`;
-    };
-    return `
-      ${b.conseil ? `<aside class="conseil"><b>À retenir</b><p>${esc(b.conseil)}</p></aside>` : ""}
-      <div class="panneaux">
-        <section class="panneau"><h3>Armes recommandées</h3>
-          <ol class="liste-icones">${(b.armes || []).map((a, i) => `<li class="${i === 0 ? "meilleur" : ""}">${icone("armes", a.replace(/\s*\([^)]*\)\s*$/, ""))}<span>${esc(a)}</span></li>`).join("")}</ol>
-        </section>
-        <section class="panneau"><h3>Sets d'artefacts</h3>
-          <ol class="liste-sets">${(b.artefacts || []).map(ligneSet).join("")}</ol>
-        </section>
-        <section class="panneau"><h3>Stats principales</h3>
-          <dl class="stats-principales">${b.stats ? ["sablier", "coupe", "couronne"].map((k) => `<div><dt>${k[0].toUpperCase() + k.slice(1)}</dt><dd>${esc(b.stats[k] || "—")}</dd></div>`).join("") : ""}</dl>
-          <h4>Substats, par priorité</h4><div class="seq">${seq(b.substats)}</div>
-          <h4>Montée des talents</h4><div class="seq">${seq(b.talents)}</div>
-        </section>
-        <section class="panneau panneau-large"><h3>Équipes recommandées</h3>
-          <div class="equipes">${(b.equipes || []).map((t) => `<div class="equipe"><div class="equipe-nom">${esc(t.nom)}</div><div class="equipiers">${t.membres.map(equipier).join("")}</div></div>`).join("")}</div>
-        </section>
-      </div>`;
+    return `<dl class="carte-identite">
+        <div><dt>${esc(g.ui.libelleElement)}</dt><dd><span class="meta-el">${iconeEl(g, p.element, 18)} ${esc(p.element)}</span></dd></div>
+        <div><dt>${esc(g.ui.libelleArme)}</dt><dd>${esc(p.arme || "—")}</dd></div>
+        <div><dt>Rareté</dt><dd>${p.rarete ? etoiles(g, p.rarete) : "Non confirmée"}</dd></div>
+        ${p.role ? `<div><dt>Rôle</dt><dd>${esc(p.role)}</dd></div>` : ""}
+        ${p.region ? `<div><dt>Région</dt><dd>${esc(p.region)}</dd></div>` : ""}
+      </dl>
+      <div class="vide"><p><b>Aucun build de référence</b></p><p>Ce sont les builds des membres, juste en dessous, qui font référence. Publie le tien pour aider les autres.</p></div>`;
   }
 
   async function pagePerso(g, id) {
@@ -645,10 +591,10 @@
       </header>
 
       <nav class="sous-nav" aria-label="Sections du personnage">
-        ${ancre("s-guide", "Guide")}${ancre("s-builds", "Builds des membres", builds.length)}${ancre("s-creations", "Créations", creations.length)}${ancre("s-souvenirs", "Souvenirs", souvenirs.length)}${ancre("s-membres", "Membres", idsMembres.length)}
+        ${ancre("s-guide", "Fiche")}${ancre("s-builds", "Builds des membres", builds.length)}${ancre("s-creations", "Créations", creations.length)}${ancre("s-souvenirs", "Souvenirs", souvenirs.length)}${ancre("s-membres", "Membres", idsMembres.length)}
       </nav>
 
-      <section class="bloc" id="s-guide"><h2>Le guide ${de(p.nom)}</h2>${guideDe(g, p)}</section>
+      <section class="bloc" id="s-guide"><h2>Fiche ${de(p.nom)}</h2>${guideDe(g, p)}</section>
 
       <section class="bloc" id="s-builds">
         <div class="bloc-tete"><h2>Builds des membres</h2><a class="btn btn-petit" href="#/nouveau-build?jeu=${g.slug}&perso=${nomUrl}">+ Publier le mien</a></div>
